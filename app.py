@@ -101,6 +101,16 @@ def about():
         logo=url_for('static', filename=LOGO)
     )
     
+@app.route('/setup')
+def setup_app():
+    # try if the db file exists
+    if os.path.isfile(DB_FILE):
+        return
+    # use the init() function to setup the application at first run
+    init()
+    return
+
+
 # page functions
 
 def load_about_content():
