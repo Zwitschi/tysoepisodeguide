@@ -1,0 +1,29 @@
+{% extends "_base.html" %}
+{% block title %}{{ episode.title }}{% endblock %}
+{% block head %}
+    {{ super() }}
+    <meta name="description" content="{{ episode.title }} - Take Your Shoes Off with Rick Glassman - {{ episode.description }}">
+    <meta property="og:title" content="{{ episode.title }} - Take Your Shoes Off with Rick Glassman" />
+    <meta property="og:description" content="{{ episode.description }}" />
+    <meta name="twitter:description" content="{{ episode.description }}" />
+    <meta name="twitter:title" content="{{ episode.title }} - Take Your Shoes Off with Rick Glassman" />
+{% endblock %}
+{% block content %}
+        <div class="col-12">
+            <div id="episode-{{ episode.number }}" class="episode">
+                <p class="episode-details">
+                    <span class="episode-number">Episode {{ episode.number }}</span> &middot; 
+                    <span class="episode-date">Published {{ episode.formatted_date }}</span><br />
+                    <span class="episode-guest">Guest: {% for g in episode.guest %} {% if loop.index > 1 %} &dash; {% endif %} <a href="/guest/{{ g }}">{{ g }}</a> {% endfor %}</span>
+                </p>
+                <a class="episode-link" href="{{ episode.url }}">
+                    <h2 class="episode-title">{{ episode.title }}</h2>
+                    <!-- <img class="episode-img" src="{{ episode.thumb }}" title="{{ episode.title }}" alt="{{ episode.title }}" /> -->
+                </a>
+                <a href="{{ episode.url }}">
+                </a>
+                <iframe width="600" height="440" src="https://www.youtube-nocookie.com/embed/{{ episode.id }}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                <p class="episode-description">{{ episode.formatted_description | safe }}</p>
+            </div>            
+        </div>
+{% endblock %}

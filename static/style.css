@@ -1,0 +1,258 @@
+/* 
+ * CSS for Take Your Shoes Off podcast episode guide 
+ * 
+ * Date: 2023-06-23
+ * Author: Georg Sinn <zwitschi82 AT gmail DOT com>
+ * License: MIT
+*/
+
+body {
+    background-color: #000;
+    color: #fff;
+}
+.container {
+    padding: 0;
+}
+.row {
+    margin: 0;
+}
+.col-12 {
+    padding: 0;
+}
+
+/* font amboy from amboy.woff */
+@font-face {
+    font-family: 'amboy-black';
+    src: url('amboy-black.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* format headers in yellow */
+h1, h2, h3, h4, h5, h6 {
+    color: #ff0;
+    font-family: 'amboy-black', sans-serif;
+}
+
+/* format all links in yellow */
+a {
+    color: #ff0;
+    font-family: 'amboy-black', sans-serif;
+}
+
+a:hover {
+    color: #fff;
+}
+
+#header {
+    color: #fff;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+#header h1 {
+    display: inline-block;
+    font-weight: bold;
+    font-size: 1.8rem;
+}
+
+#header h1 a {
+    text-decoration: none;
+    color: #0060df;
+}
+
+#header-img {
+    display: inline-block;
+    margin-right: 1em;
+}
+
+#header-img img {
+    height: 50px;
+}
+
+#header-img, #header-img img, #header-nav h1 {
+    vertical-align: bottom;
+    height: 50px;
+    line-height: 50px;
+}
+#footer {
+    font-family: 'amboy-black', sans-serif;
+}
+
+/** formatting for index.html **/
+
+table#episode-guide, table#guests {
+    margin-top: .5em;
+}
+table#episode-guide th, table#guests th {
+    font-family: 'amboy-black', sans-serif;
+    font-size: 1.2rem;
+}
+.episode-list {
+    width: 100%;
+}
+.episode-list img {
+    max-width: 200px;
+}
+.episode-list .episode-title {
+    font-size: 1.2rem;
+}
+.episode-list .episode-guest a {
+    font-family: Arial, Helvetica, sans-serif;
+}
+/*td.episode-title, td.episode-guest, td.episode-date, .episode-link {
+    vertical-align: top;
+    font-family: 'amboy-black', sans-serif;
+}*/
+td.episode-title {
+    font-size: 2.2rem;
+    font-weight: bold;
+}
+td.episode-guest {
+    font-weight: normal;
+    font-size: 1.2rem;
+    flex-wrap: wrap;
+}
+td.episode-date {
+    text-align: right;
+    font-weight: normal;
+    font-size: 1.2rem;
+}
+.episode-link {
+    font-family: Arial, Helvetica, sans-serif;
+    vertical-align: top;
+    text-decoration: none;
+    font-weight: normal;
+}
+
+/** formatting for episode.html **/
+
+h2.episode-title {
+    font-size: 2.2rem;
+    font-weight: bold;
+    width: 100%;
+    z-index: 1;
+}
+
+#guest .episode-img {
+    display: inline-block;
+    height: 144px;
+}
+
+.episode .episode-details {
+    margin-top: 1em;
+    font-family: 'amboy-black', sans-serif;
+}
+
+.episode .episode-link {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    font-size: 1.2rem;
+}
+
+.episode .episode-number {
+    font-family: 'amboy-black', sans-serif;
+}
+
+.episode-description {
+    margin-top: 1em;
+}
+
+.episode-description a {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.guest-list .guest-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.guest-name .guest-link {
+    font-family: Arial, Helvetica, sans-serif;
+    text-decoration: none;
+}
+
+.guest-list .episode-link {
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    font-size: 1.2rem;
+}
+
+
+#guest-episodes table {
+    font-size: 1.2rem;
+}
+#guest-episodes table th {
+    font-family: 'amboy-black', sans-serif;
+}
+
+#about-page p {
+    font-size: 1.0rem;
+}
+#about-page a {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#content {
+    margin-bottom: 1rem;
+}
+#footer {
+    font-family: 'amboy-black', sans-serif;
+    font-size: 1.2rem;
+    background-color: #000;
+    height: 1.5rem;
+    margin: 1.5rem auto 0 auto;
+}
+
+@media screen and (max-width: 400px) {
+    #header-img {
+        display: none;
+    }
+    #header .col-9, #header h1 {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        font-size: 1.2rem;
+    }
+    th.ep-head-date, th.ep-head-duration,
+    td.episode-date, td.episode-duration {
+        display: none;
+    }
+    #header-nav {
+        width: 100%;
+        display: block;
+        padding: 0;
+    }
+    #header-nav.col-3 ul.nav.justify-content-start li.nav-item a.nav-link {
+        margin-right: 1em;
+        padding: 0;
+    }
+    .episode-list img {
+        
+        max-height: 2.5em;
+    }
+
+    .episode-img {
+        float: none;
+        margin-left: 0;
+        max-width: 100%;
+    }
+
+    .episode-link {
+        font-size: 1em;
+        line-height: 1em;
+    }
+
+    h2.episode-title {
+        font-size: 1.6rem;
+    }
+
+    .episode .episode-img {
+        display: block;
+        margin-right: 0;
+        position: relative;
+        top: 0;
+        z-index: -9;
+    }
+    
+}

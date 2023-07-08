@@ -1,0 +1,15 @@
+{% extends "_base.html" %}
+{% block title %}Episode Guide{% endblock %}
+{% block head %}
+    {{ super() }}
+    <meta name="description" content="Episode Guide for the Take Your Shoes Off with Rick Glassman">
+    <meta property="og:title" content="Take Your Shoes Off with Rick Glassman" />
+    <meta property="og:description" content="Take Your Shoes Off with Rick Glassman" />
+    <meta name="twitter:description" content="Take Your Shoes Off with Rick Glassman" />
+    <meta name="twitter:title" content="Take Your Shoes Off with Rick Glassman" />
+{% endblock %}
+{% block content %}
+    <div class="col-12" id="about-page">
+        {{ about | safe }}
+    </div>
+{% endblock %}

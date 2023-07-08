@@ -1,0 +1,40 @@
+{% extends "_base.html" %}
+{% block title %}{{ guest.name }}{% endblock %}
+{% block head %}
+    {{ super() }}
+    <meta name="description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman">
+    <meta property="og:title" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+    <meta property="og:description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+    <meta name="twitter:description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+    <meta name="twitter:title" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+{% endblock %}
+{% block content %}
+        <div class="col-12">
+            <div id="guest">
+                <h1 id="guest-name">{{ guest.name }}</h1>
+                <p>All appearances of {{ guest.name }} on Take Your Shoes Off</p>
+                <div id="guest-episodes">
+                    <table class="table table-dark table-striped table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Episode</th>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in guest.episodes %}
+                            <tr>
+                                <td><a id="episode-{{ e.id }}" class="episode-link" href="/{{ e.id }}">#{{ e.number }}</a></td>
+                                <td><a id="episode-{{ e.id }}" class="episode-link" href="/{{ e.id }}">{{ e.formatted_date }}</a></td>
+                                <td><a id="episode-{{ e.id }}" class="episode-link" href="/{{ e.id }}">{{ e.title }}</a></td>
+                                <td><a id="episode-{{ e.id }}" class="episode-link" href="/{{ e.id }}"><img class="episode-img" src="{{ e.thumb }}" title="{{ e.title }}" alt="{{ e.title }}" /></a>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+{% endblock %}
