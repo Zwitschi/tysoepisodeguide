@@ -11,6 +11,11 @@ from time import sleep
 from datetime import datetime
 from flask import Flask, render_template, url_for
 
+
+# load API_KEY from .env
+dotenv.load_dotenv()
+API_KEY = os.getenv('API_KEY')
+
 # Constants
 API_URL = 'https://www.googleapis.com/youtube/v3/'
 STATIC_DIR = 'static/'
@@ -22,10 +27,6 @@ DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
 if not os.path.exists(os.path.join(BASE_DIR, 'db')):
     os.makedirs(os.path.join(BASE_DIR, 'db'))
 
-dotenv.load_dotenv()
-
-# load API_KEY from .env
-API_KEY = os.getenv('API_KEY')
 
 app = Flask(__name__)
 
@@ -178,32 +179,6 @@ def guest_list():
     return guests
 
 # database functions
-
-def create_tables():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS channels (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        url TEXT,
-        last_updated TEXT
-    )
-    ''')
-    c.execute('''
-    CREATE TABLE IF NOT EXISTS videos (
-        id TEXT PRIMARY KEY, 
-        title TEXT, 
-        url TEXT, 
-        description TEXT, 
-        thumb TEXT, 
-        published_date TEXT, 
-        duration INTEGER, 
-        number TEXT 
-    )
-    ''')
-    conn.commit()
-    conn.close()
 
 def insert_channel(channel):
     conn = sqlite3.connect(DB_FILE)
@@ -645,6 +620,35 @@ def get_video_ids(channelid):
         update_channel(channel)
     return video_ids
 
+def get_episode_details(video_ids):
+    """
+    Get the episode details from the video ids
+    
+    Arguments:
+        video_ids -- list of video ids
+
+    Returns:
+        episode_details -- list of episode details
+    """
+    episode_details = []
+    
+    for video_id in video_ids:
+        # check if video is in db:
+        row = read_video(video_id[0])
+        if row is not None:
+            # read video detail from db
+            video_detail = {'id': row[0], 'title': row[1], 'url': row[2], 'description': row[3], 'thumb': row[4], 'published_date': row[5], 'duration': row[6], 'number': row[7]}
+        else:
+            # read video detail from youtube API
+            video_detail = get_episode_yt(video_id[0])
+            if video_detail != {}:
+                insert_video(video_detail)
+    if video_detail != {}:
+        episode_details.append(video_detail)
+
+    return episode_details
+
+
 def update_db():
     """
     Initialise the database and create the tables if needed.
@@ -666,20 +670,7 @@ def update_db():
     video_ids = get_video_ids(channelid)
     
     # Get the episode details from the video ids
-    episode_details = []
-    
-    for video_id in video_ids:
-        # check if video is in db:
-        row = read_video(video_id[0])
-        if row is not None:
-            # read video detail from db
-            video_detail = {'id': row[0], 'title': row[1], 'url': row[2], 'description': row[3], 'thumb': row[4], 'published_date': row[5], 'duration': row[6], 'number': row[7]}
-        else:
-            video_detail = get_episode_yt(video_id[0])
-            if video_detail != {}:
-                insert_video(video_detail)
-    if video_detail != {}:
-        episode_details.append(video_detail)
+    episode_details = get_episode_details(video_ids)
 
     for e in episode_details:
         ep = Episode(e['id'], e['title'], e['url'], e['description'], e['thumb'], e['published_date'], e['duration'], e['number'])
