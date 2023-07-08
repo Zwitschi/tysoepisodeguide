@@ -35,19 +35,5 @@ def main():
         conn.commit()
         conn.close()
 
-    from setuptools import setup, find_packages
-
-    setup(
-        name='tysoepisodeguide',
-        version='0.1',
-        packages=find_packages(),
-        install_requires=[
-            "requests",
-            "Flask",
-            "markdown",
-            "python-dotenv"
-        ]
-    )
-
 if __name__ == '__main__':
     main()
