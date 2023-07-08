@@ -101,6 +101,14 @@ def about():
         logo=url_for('static', filename=LOGO)
     )
 
+@app.route('/update')
+def update():
+    """
+    Update database
+    Checks channel and if necessary youtube API to update database
+    """
+    update_db()
+
 # page functions
 
 def load_about_content():
@@ -439,13 +447,12 @@ def check_video_id(video_id):
             # get video info
             video = get_youtube_video(video_id)
             update_video(video)
-            print('Video updated in db')
             sleep(2)
     else:
         # get video info
         video = get_youtube_video(video_id)
         insert_video(video)
-        print('Video inserted into db: ' + video['title'])
+        print('New video: ' + video['title'])
 
 def get_episode_number(video_title):
     """
@@ -508,7 +515,7 @@ def get_video_duration(video_id):
     pagedata = api_call(video_url)
     # check if there are any results, if not, abort
     if len(pagedata['items']) == 0:
-        print('Error: no video found')
+        print('Error: no video found for id ' + video_id)
         return
     # get the video duration
     video_duration['duration'] = pagedata['items'][0]['contentDetails']['duration']
@@ -584,7 +591,7 @@ def get_episode_yt(video_id):
     res = api_call(video_url)
     # check if there are any results, if not, abort
     if len(res['items']) == 0:
-        print('Error: no video found')
+        print('Error: no video found for id ' + video_id)
         return {}
     # Check if video is an episode
     if not is_episode(res['items'][0]['snippet']['title'], parse_duration(res['items'][0]['contentDetails']['duration']['duration'])):
@@ -638,30 +645,7 @@ def get_video_ids(channelid):
         update_channel(channel)
     return video_ids
 
-def check_channel(channelid):
-    """
-    Check channel details for updates.
-    Read channel details and check if new videos are available.
-    If new videos are available, update the channel details.
-    Return True if channel details were updated, False if not.
-
-    Arguments:
-        channelid -- the id of the channel
-
-    Returns:
-        bool -- True if channel details were updated, False if not
-    """
-    # Get the channel details
-    channel_details = read_channel(channelid)
-    # If there is no record yet, query youtube API and save details
-    if channel_details is None:
-        channel_details = get_channel_details(channelid)
-        insert_channel(channel_details)
-        return True
-    # Return False if channel details were not updated
-    return False
-    
-def init():
+def update_db():
     """
     Initialise the database and create the tables if needed.
     Check the channel details for updates.
@@ -672,7 +656,11 @@ def init():
     channelid = 'UCYCGsNTvYxfkPkfQopRMP7w'
 
     # Check if channel details are up to date
-    check_channel(channelid)
+    channel_details = read_channel(channelid)
+    # If there is no record yet, query youtube API and save details
+    if channel_details is None:
+        channel_details = get_channel_details(channelid)
+        insert_channel(channel_details)
     
     # Get the video ids from the channel id
     video_ids = get_video_ids(channelid)
@@ -704,8 +692,5 @@ def init():
                 update_video(e)
     
 if __name__ == '__main__':
-    # Initialise the database
-    init()
-    
     # Run the app
     app.run()
