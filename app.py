@@ -18,6 +18,10 @@ STATIC_DIR = 'static/'
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
 
+# create db folder if not exists
+if not os.path.exists(os.path.join(BASE_DIR, 'db')):
+    os.makedirs(os.path.join(BASE_DIR, 'db'))
+
 dotenv.load_dotenv()
 
 # load API_KEY from .env
