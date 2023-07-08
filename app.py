@@ -100,16 +100,6 @@ def about():
         icon=url_for('static', filename=ICON),
         logo=url_for('static', filename=LOGO)
     )
-    
-@app.route('/setup')
-def setup_app():
-    # try if the db file exists
-    if os.path.isfile(DB_FILE):
-        return
-    # use the init() function to setup the application at first run
-    init()
-    return
-
 
 # page functions
 
@@ -679,9 +669,6 @@ def init():
     Get the episode details from the video ids.
     Update the database with the episode details if needed.    
     """
-    # create the database tables
-    create_tables()
-
     channelid = 'UCYCGsNTvYxfkPkfQopRMP7w'
 
     # Check if channel details are up to date
