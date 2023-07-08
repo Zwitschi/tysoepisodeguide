@@ -16,4 +16,3 @@ __pycache__
 /tyso
 /tyso/*
 pyvenv.cfg
-db/tysodb.db
