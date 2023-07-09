@@ -47,7 +47,7 @@ a:hover {
 #header {
     color: #fff;
     padding: 0;
-    margin-bottom: 0;
+    margin-bottom: 1em;
 }
 
 #header h1 {
@@ -80,7 +80,6 @@ a:hover {
 }
 
 /** formatting for index.html **/
-
 table#episode-guide, table#guests {
     margin-top: .5em;
 }
@@ -125,13 +124,12 @@ td.episode-date {
     font-weight: normal;
 }
 
-/** formatting for episode.html **/
-
 #guest .episode-img {
     display: inline-block;
     height: 144px;
 }
 
+/** formatting for episode.html **/
 .episode .episode-details {
     margin-top: 1em;
     font-family: 'amboy-black', sans-serif;
@@ -151,7 +149,15 @@ h2.episode-title {
 }
 
 .episode .episode-title {
-    color: #0060df;    
+    text-decoration: underline;
+}
+
+.episode .episode-title:hover {
+    color: #fff;
+}
+
+.episode a.episode-link:hover {
+    color: #fff;
 }
 
 .episode .episode-number {
@@ -166,6 +172,7 @@ h2.episode-title {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+/** formatting for guests.html **/
 .guest-list .guest-name {
     font-size: 1.2rem;
     font-weight: bold;
@@ -182,7 +189,7 @@ h2.episode-title {
     font-size: 1.2rem;
 }
 
-
+/** formatting for guest.html **/
 #guest-episodes table {
     font-size: 1.2rem;
 }

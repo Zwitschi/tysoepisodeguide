@@ -129,6 +129,56 @@ class Episode:
 
         return title
     
+    def get_episode_number(self):
+        """
+        Get the episode number from the video title
+
+        Arguments:
+            self: the episode object
+        
+        Returns:
+            int: the episode number
+        """
+        # Create an episode number variable
+        episode_number = 0
+
+        # exceptions
+        if '#' not in self.title and 'Balcony Series' in self.title:
+            # try to get the episode number from the title with regex, only consider numbers and . 
+            episode_number = re.findall(r'[\d\.]+', self.title)
+            if len(episode_number) > 0:
+                episode_number = episode_number[0]
+        elif '#shorts' or '#replenish' in self.title:
+            episode_number = 0
+        elif '#' not in self.title and '50th' in self.title:
+            episode_number = 50
+        elif 'BEST OF' in self.title or 'PATREON UNLOCKED' in self.title:
+            return 0
+        elif '#' not in self.title:
+            episode_number = 0
+        else:
+            print(self.title)
+            # Get the episode number from title, split at '#' character to find the episode number
+            episode_number = self.title.split('#')[1]
+            # additional checks on episode number, remove ')', '!' and replace ' pt ' with '.'
+            episode_number = episode_number.replace(')','')
+            episode_number = episode_number.replace('!','')
+            episode_number = episode_number.replace(' pt ','.')    
+            # shorten
+            episode_number = episode_number.split(' ')[0]
+        
+        if episode_number == 0 or episode_number == 50:
+            return episode_number
+        elif '.' in episode_number:
+            # if number contains a '.' then cast as float
+            episode_number = float(episode_number)
+        else:
+            episode_number = int(episode_number)
+
+        print(self.title)
+        print(episode_number)
+        return episode_number
+    
     def get_guest(self):
         # create a list of guests
         guests = []

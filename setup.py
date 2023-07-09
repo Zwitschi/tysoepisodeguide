@@ -1,8 +1,10 @@
 import os
+import sys
 import re
 import sqlite3
 import requests
 import dotenv
+import markdown
 from time import sleep
 from datetime import datetime
 
@@ -16,7 +18,121 @@ DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
 dotenv.load_dotenv()
 API_KEY = os.getenv('API_KEY')
 
+# page functions
+
+def load_about_content():
+    """
+    Load ABOUT.md and README.md files and convert markdown to html
+
+    Returns:
+        str: html string
+    """
+    html = ""
+    with open('ABOUT.md', 'r') as f:
+        about = f.read()
+        html = markdown.markdown(about)
+    
+    with open('README.md', 'r') as f:
+        readme = f.read()
+        html += markdown.markdown(readme)
+
+    return html
+
+def load_license_content():
+    """
+    Load LICENSE markdown file and return html
+
+    Returns:
+        str: html string
+    """
+    with open('LICENSE', 'r') as f:
+        license = f.read()
+        return markdown.markdown(license)
+
+def guest_list(order='ASC'):
+    """ 
+    Create the list of guests for the guests page
+
+    Returns:
+        list: list of Guest objects
+    """
+    # create a list of episodes
+    episodes = []
+
+    # get all videos from db
+    videos = read_videos()
+    
+    # add episodes to list
+    for e in videos:
+        episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]))
+    
+    # create a list of unique guest names
+    guest_names = []
+
+    # find all guests in all episodes
+    for e in episodes:
+        # get the episode guest(s)
+        ep_guest = e.guest
+        # if more than one guest, split guests into list
+        if len(ep_guest) > 1:
+            for gn in ep_guest:
+                gn = gn.strip()
+                if gn not in guest_names:
+                    guest_names.append(gn)
+        else:
+            gn = ep_guest[0].strip()
+            if gn not in guest_names:
+                guest_names.append(gn)
+
+    # sort guests by name
+    guest_names.sort(key=lambda x: x)
+
+    # create a list of guests
+    guests = []
+
+    # add episodes to guests
+    for gn in guest_names:
+        g = Guest(gn)
+        g.episodes = [e for e in episodes if gn in e.guest]
+        # if sort order is 'DESC', reverse episode list
+        if order == 'DESC':
+            g.episodes.reverse()
+        guests.append(g)
+    return guests
+
+def read_videos(order='ASC'):
+    """
+    Read all episode videos from database
+
+    Arguements:
+        order (str): order to sort videos by. Default is ASC, can be DESC
+
+    Returns:
+        list: list of videos
+    """
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    sql = '''
+    SELECT * FROM videos 
+    WHERE duration > 1600 
+    AND title NOT LIKE "%Rick Glassman & Esther Povitsky Have a Time%" 
+    AND title NOT LIKE "%Playing some Magic: The Gathering%"
+    AND title NOT LIKE "%Magic the Gathering LIVE from Marshall Rug Gallery%"
+    and title NOT LIKE "%Take Your Shoes Off - BEST OF %"
+    ORDER BY published_date ''' + order + ''';
+    '''
+    c.execute(sql)
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
 def insert_channel(channel):
+    """
+    Insert channel into database
+
+    Args:
+        channel (dict): channel details
+    """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('INSERT INTO channels (id, title, url, last_updated) VALUES (?, ?, ?, ?)', (channel['id'], channel['title'], channel['url'], channel['last_updated']))
@@ -70,6 +186,12 @@ def check_channel_update(channelid):
             return False
         
 def update_channel(channel):
+    """
+    Update channel in database
+
+    Args:
+        channel (dict): channel details
+    """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('UPDATE channels SET last_updated = ? WHERE id = ?', (channel['last_updated'], channel['id']))
@@ -77,6 +199,12 @@ def update_channel(channel):
     conn.close()
 
 def insert_video(video):
+    """
+    Insert video into database
+
+    Args:
+        video (dict): video details
+    """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('''
@@ -87,6 +215,12 @@ def insert_video(video):
     conn.close()
 
 def update_video(video):
+    """
+    Update video in database
+    
+    Args:
+        video (dict): video details
+    """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('''
@@ -98,6 +232,12 @@ def update_video(video):
     conn.close()
 
 def read_video_ids():
+    """
+    Read all video ids from database
+    
+    Returns:
+        list: list of video ids
+    """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('SELECT id FROM videos')
@@ -181,10 +321,10 @@ def get_episode_number(video_title):
     Get the episode number from the video title
 
     Arguments:
-        video_title -- the title of the video
-
+        video_title (str): the title of the video
+    
     Returns:
-        episode_number -- the episode number
+        int: the episode number
     """
     # Create an episode number variable
     episode_number = 0
@@ -206,17 +346,17 @@ def get_episode_number(video_title):
         episode_number = episode_number.replace(')','')
         episode_number = episode_number.replace('!','')
         episode_number = episode_number.replace(' pt ','.')    
-        
         # shorten
         episode_number = episode_number.split(' ')[0]
-        # if number contains a '.' then cast as decimal
     
     if episode_number == 0 or episode_number == 50:
         return episode_number
     elif '.' in episode_number:
+        # if number contains a '.' then cast as float
         episode_number = float(episode_number)
     else:
         episode_number = int(episode_number)
+
     return episode_number
 
 def get_video_duration(video_id):
@@ -224,10 +364,10 @@ def get_video_duration(video_id):
     Get the video duration from the video id
 
     Arguments:
-        video_id -- the id of the video
+        video_id (str): the id of the video
 
     Returns:
-        video_duration -- a dictionary containing the video duration
+        dict: the video duration
     """
     # Create a video duration dictionary
     video_duration = {}
@@ -250,10 +390,10 @@ def parse_duration(duration):
     PT stands for Time Duration
 
     Arguments:
-        duration -- the duration string
+        duration (str): the duration string
 
     Returns:
-        duration_seconds -- the duration in seconds
+        int: the duration in seconds    
     """
     # Create a duration seconds variable
     duration_seconds = 0
@@ -287,10 +427,11 @@ def is_episode(episode_title, duration=0):
     Filter video for full episodes of Take Your Shoes Off
 
     Arguments:
-        video_detail {dict} -- video details
+        episode_title (str): the title of the episode
+        duration (int): the duration of the episode
 
     Returns:
-        bool -- True if video is a full episode of Take Your Shoes Off
+        bool: True if episode is a full episode, False otherwise
     """
     if duration > 1600 and ('Take Your Shoes Off' in episode_title or 'TYSO' in episode_title):
         return True
@@ -302,10 +443,10 @@ def get_episode_yt(video_id):
     Get the details of the episode from the Youtube API via video id
 
     Arguments:
-        video_id -- the id of the video
+        video_id (str): the id of the video
 
     Returns:
-        episode -- a dictionary containing the episode details
+        dict: the episode details
     """
     # Get the video url from the video id
     video_url = API_URL + 'videos?part=snippet&id=' + video_id + '&key=' + API_KEY
@@ -337,9 +478,16 @@ def get_episode_yt(video_id):
 def check_video_id(video_id):
     """
     Check if the video id is already in database.
-    If not, get the video details from youtube API and save in database.
-    If it is, check if video details are saved in database.
-    If only id is present, get the video details from youtube API and update row in database.
+
+    If video id is not in database, get the video details from youtube API and save.
+    If video id is in database, check if video details are saved in database.
+    If only video id is present, get the video details from youtube API and update database.
+
+    Arguments:
+        video_id (str): the id of the video
+
+    Returns:
+        bool: True if video id is in database, False otherwise
     """
     video = read_video(video_id)
     if video:
@@ -349,12 +497,14 @@ def check_video_id(video_id):
             video = get_youtube_video(video_id)
             update_video(video)
             sleep(2)
+        return True
     else:
         # get video info
         video = get_youtube_video(video_id)
         insert_video(video)
         print('New video: ' + video['title'])
         sleep(2)
+        return False
 
 def get_video_ids(channelid):
     """
@@ -363,10 +513,10 @@ def get_video_ids(channelid):
     If not, get video ids from youtube API and save in db.
 
     Arguments:
-        channelid -- the id of the channel
+        channelid (str): the id of the channel
         
     Returns:
-        video_ids -- list of video ids
+        list: the video ids
     """
     if check_channel_update(channelid) == True:
         # channel was updated in the last 24 hours, read videos from db
@@ -395,7 +545,7 @@ def api_call(url):
     Make an API call to the YouTube API
 
     Args:
-        url: string, the url to call
+        url (str): the url to call
 
     Returns:
         dict: the response from the API
@@ -412,8 +562,8 @@ def get_channel_details(channel_id):
     Query the YouTube API for the channel details
 
     Args:
-        channel_id: string, the id of the channel
-        
+        channel_id (str): the id of the channel
+
     Returns:
         dict: the channel details
     """
@@ -427,6 +577,35 @@ def get_channel_details(channel_id):
     }
     return channel
 
+def get_episodes(video_ids):
+    """
+    Get the details of the episodes from the video ids.
+    
+    Arguments:
+        video_ids (list): the ids of the videos
+
+    Returns:
+        list: the episode details
+    
+    """
+    episode_details = []
+    for video_id in video_ids:
+        # check if video is in db:
+        row = read_video(video_id[0])
+        if row is not None:
+            # read video detail from db
+            video_detail = {'id': row[0], 'title': row[1], 'url': row[2], 'description': row[3], 'thumb': row[4], 'published_date': row[5], 'duration': row[6], 'number': row[7]}
+        else:
+            # get video detail from youtube API
+            print('New video: ' + video_id[0])
+            video_detail = get_episode_yt(video_id[0])
+            if video_detail != {}:
+                insert_video(video_detail)
+        if video_detail != {}:
+            episode_details.append(video_detail)
+
+    return episode_details
+
 def update_db():
     """
     Initialise the database and create the tables if needed.
@@ -435,33 +614,29 @@ def update_db():
     Get the episode details from the video ids.
     Update the database with the episode details if needed.
     """
+    # set channel id
     channelid = 'UCYCGsNTvYxfkPkfQopRMP7w'
 
     # Check if channel details are up to date
     channel_details = read_channel(channelid)
+
     # If there is no record yet, query youtube API and save details
     if channel_details is None:
+        print('New channel: ' + channelid)
         channel_details = get_channel_details(channelid)
         insert_channel(channel_details)
     
     # Get the video ids from the channel id
     video_ids = get_video_ids(channelid)
+
+    # print the number of videos found
+    print(str(len(video_ids)) + ' videos found')
     
     # Get the episode details from the video ids
-    episode_details = []
-    
-    for video_id in video_ids:
-        # check if video is in db:
-        row = read_video(video_id[0])
-        if row is not None:
-            # read video detail from db
-            video_detail = {'id': row[0], 'title': row[1], 'url': row[2], 'description': row[3], 'thumb': row[4], 'published_date': row[5], 'duration': row[6], 'number': row[7]}
-        else:
-            video_detail = get_episode_yt(video_id[0])
-            if video_detail != {}:
-                insert_video(video_detail)
-    if video_detail != {}:
-        episode_details.append(video_detail)
+    episode_details = get_episodes(video_ids)
+
+    # print the number of episodes found
+    print(str(len(episode_details)) + ' episodes found')
 
     for e in episode_details:
         ep = Episode(e['id'], e['title'], e['url'], e['description'], e['thumb'], e['published_date'], e['duration'], e['number'])
@@ -473,39 +648,76 @@ def update_db():
             if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description:
                 update_video(e)
 
+def create_db():
+    # create db file
+    print('Creating db file')
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''SELECT * FROM sqlite_master WHERE type='table' ''')
+    tables = c.fetchall()
+    print('Found ' + str(len(tables)) + ' tables')
+    conn.close()
+              
+def create_tables():
+    # create db file
+    create_db()
+    conn = sqlite3.connect(DB_FILE)
 
-def main():
+    c = conn.cursor()
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS channels (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        url TEXT,
+        last_updated TEXT
+    )
+    ''')
+    print('Creating channels table')
+
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS videos (
+        id TEXT PRIMARY KEY, 
+        title TEXT, 
+        url TEXT, 
+        description TEXT, 
+        thumb TEXT, 
+        published_date TEXT, 
+        duration INTEGER, 
+        number TEXT 
+    )
+    ''')
+    print('Creating videos table')
+    conn.commit()
+    conn.close()
+
+def install():
+    # bit to check if installation has been done before
+    is_installed = False
     # create db folder if not exists
     if not os.path.exists(os.path.join(BASE_DIR, 'db')):
+        # create db folder
+        print('Creating db folder')
         os.makedirs(os.path.join(BASE_DIR, 'db'))
-
-    if not os.path.isfile(DB_FILE):
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-        c.execute('''
-        CREATE TABLE IF NOT EXISTS channels (
-            id TEXT PRIMARY KEY,
-            title TEXT,
-            url TEXT,
-            last_updated TEXT
-        )
-        ''')
-        c.execute('''
-        CREATE TABLE IF NOT EXISTS videos (
-            id TEXT PRIMARY KEY, 
-            title TEXT, 
-            url TEXT, 
-            description TEXT, 
-            thumb TEXT, 
-            published_date TEXT, 
-            duration INTEGER, 
-            number TEXT 
-        )
-        ''')
-        conn.commit()
-        conn.close()
-
-    update_db()
+    else:
+        is_installed = True
+        
+    if not os.path.exists(DB_FILE):
+        create_db()
+        create_tables()
+        print('Database created')
+    else:
+        is_installed = True
+    
+    if is_installed:
+        print('Installation complete')
 
 if __name__ == '__main__':
-    main()
+    # accept arguments 'install' or 'update'
+    if len(sys.argv) == 2:
+        if sys.argv[1] == 'install':
+            install()
+        elif sys.argv[1] == 'update':
+            update_db()
+    else:
+        print('Usage: python setup.py [install|update]')
+        sys.exit(1)

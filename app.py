@@ -2,14 +2,13 @@ import os
 import re
 import sqlite3
 import requests
-import markdown
 import dotenv
 from classes.episode import Episode
-from classes.guest import Guest
+from setup import update_db, read_videos, read_video, guest_list, load_about_content, load_license_content
 
 from time import sleep
 from datetime import datetime
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template, url_for, request
 
 
 # load API_KEY from .env
@@ -18,15 +17,9 @@ API_KEY = os.getenv('API_KEY')
 
 # Constants
 API_URL = 'https://www.googleapis.com/youtube/v3/'
-STATIC_DIR = 'static/'
 
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
-
-# create db folder if not exists
-if not os.path.exists(os.path.join(BASE_DIR, 'db')):
-    os.makedirs(os.path.join(BASE_DIR, 'db'))
-
 
 app = Flask(__name__)
 
@@ -37,15 +30,21 @@ LOGO = 'TYSO_logo_1400x1400.jpg'
 # Routes
 @app.route('/')
 def index():
+    order = 'ASC'
+    reverse = 'DESC'
+    # get sort order from request args (if present)
+    if 'sort' in request.args:
+        order = request.args.get('sort', order, type = str)
     episodes = []
-    for e in read_videos():
+    for e in read_videos(order=order):
         episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]))        
     return render_template(
         'index.html', 
         episodes=episodes, 
         css_file=url_for('static', filename=CSS_FILE), 
         icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO)
+        logo=url_for('static', filename=LOGO),
+        order=reverse if order == 'ASC' else 'ASC'
     )
 
 @app.route('/<episode_id>')
@@ -79,13 +78,19 @@ def guest(guest_name):
     Guest page
     list of dicts with guest names and links to their episodes
     """
-    guest = [g for g in guest_list() if g.name == guest_name][0]
+    order = 'ASC'
+    reverse = 'DESC'
+    # get sort order from request args (if present)
+    if 'sort' in request.args:
+        order = request.args.get('sort', order, type = str)
+    guest = [g for g in guest_list(order=order) if g.name == guest_name][0]
     return render_template(
         'guest.html', 
         guest=guest,
         css_file=url_for('static', filename=CSS_FILE), 
         icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO)
+        logo=url_for('static', filename=LOGO),
+        order=reverse if order == 'ASC' else 'ASC'
     )
 
 @app.route('/about')
@@ -110,73 +115,24 @@ def update():
     """
     update_db()
 
-# page functions
-
-def load_about_content():
+@app.route('/LICENSE')
+def license():
     """
-    Load ABOUT.md and README.md files and convert markdown to html
-
-    Returns:
-        str: html string
+    License page
+    Static page with license information
     """
-    html = ""
-    with open('ABOUT.md', 'r') as f:
-        about = f.read()
-        html = markdown.markdown(about)
-    
-    with open('README.md', 'r') as f:
-        readme = f.read()
-        html += markdown.markdown(readme)
+    return render_template(
+        'about.html',
+        about=load_license_content(),
+        css_file=url_for('static', filename=CSS_FILE), 
+        icon=url_for('static', filename=ICON),
+        logo=url_for('static', filename=LOGO)
+    )
 
-    return html
-
-def guest_list():
-    """ 
-    Create the list of guests for the guests page
-
-    Returns:
-        list: list of Guest objects
-    """
-    # create a list of episodes
-    episodes = []
-
-    # get all videos from db
-    videos = read_videos()
-    
-    # add episodes to list
-    for e in videos:
-        episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]))
-    
-    # create a list of unique guest names
-    guest_names = []
-
-    # find all guests in all episodes
-    for e in episodes:
-        # get the episode guest(s)
-        ep_guest = e.guest
-        # if more than one guest, split guests into list
-        if len(ep_guest) > 1:
-            for gn in ep_guest:
-                gn = gn.strip()
-                if gn not in guest_names:
-                    guest_names.append(gn)
-        else:
-            gn = ep_guest[0].strip()
-            if gn not in guest_names:
-                guest_names.append(gn)
-
-    # sort guests by name
-    guest_names.sort(key=lambda x: x)
-
-    # create a list of guests
-    guests = []
-
-    # add episodes to guests
-    for gn in guest_names:
-        g = Guest(gn)
-        g.episodes = [e for e in episodes if gn in e.guest]
-        guests.append(g)
-    return guests
+# special route for favicon.ico in /static
+@app.route('/favicon.ico')
+def favicon():
+    return url_for('static', filename='favicon.ico')
 
 # database functions
 
@@ -278,39 +234,10 @@ def update_video(video):
     conn.commit()
     conn.close()
 
-def delete_video(video_id):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('DELETE FROM videos WHERE id = ?', (video_id,))
-    conn.commit()
-    conn.close()
-
 def read_video_ids():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('SELECT id FROM videos')
-    rows = c.fetchall()
-    conn.close()
-    return rows
-
-def read_videos():
-    """
-    Read all episode videos from database
-
-    Returns:
-        list: list of videos
-    """
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('''
-    SELECT * FROM videos 
-    WHERE duration > 1600 
-    AND title NOT LIKE "%Rick Glassman & Esther Povitsky Have a Time%" 
-    AND title NOT LIKE "%Playing some Magic: The Gathering%"
-    AND title NOT LIKE "%Magic the Gathering LIVE from Marshall Rug Gallery%"
-    and title NOT LIKE "%Take Your Shoes Off - BEST OF %"
-    ORDER BY published_date
-    ''')
     rows = c.fetchall()
     conn.close()
     return rows
@@ -428,6 +355,7 @@ def check_video_id(video_id):
         video = get_youtube_video(video_id)
         insert_video(video)
         print('New video: ' + video['title'])
+        sleep(2)
 
 def get_episode_number(video_title):
     """
@@ -649,38 +577,6 @@ def get_episode_details(video_ids):
     return episode_details
 
 
-def update_db():
-    """
-    Initialise the database and create the tables if needed.
-    Check the channel details for updates.
-    Get the video ids from the channel id.
-    Get the episode details from the video ids.
-    Update the database with the episode details if needed.    
-    """
-    channelid = 'UCYCGsNTvYxfkPkfQopRMP7w'
-
-    # Check if channel details are up to date
-    channel_details = read_channel(channelid)
-    # If there is no record yet, query youtube API and save details
-    if channel_details is None:
-        channel_details = get_channel_details(channelid)
-        insert_channel(channel_details)
-    
-    # Get the video ids from the channel id
-    video_ids = get_video_ids(channelid)
-    
-    # Get the episode details from the video ids
-    episode_details = get_episode_details(video_ids)
-
-    for e in episode_details:
-        ep = Episode(e['id'], e['title'], e['url'], e['description'], e['thumb'], e['published_date'], e['duration'], e['number'])
-        row = read_video(e['id'])
-        if row is None:
-            insert_video(e)
-        else:
-            dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
-            if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description:
-                update_video(e)
     
 if __name__ == '__main__':
     # Run the app
