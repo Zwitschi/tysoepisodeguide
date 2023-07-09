@@ -114,6 +114,13 @@ def update():
     Checks channel and if necessary youtube API to update database
     """
     update_db()
+    return render_template(
+        'about.html',
+        about='Database updated',
+        css_file=url_for('static', filename=CSS_FILE),
+        icon=url_for('static', filename=ICON),
+        logo=url_for('static', filename=LOGO)
+    )
 
 @app.route('/LICENSE')
 def license():
