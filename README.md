@@ -16,7 +16,6 @@ This python program is used to generate the episode guide from the YouTube chann
     * request
     * markdown
     * gunicorn
-    * python-dotenv
 
 ## Prerequisites
 

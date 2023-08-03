@@ -3,12 +3,10 @@ YouTube API class
 """
 import os
 import requests
-import dotenv
 from datetime import datetime
 
 API_URL = 'https://www.googleapis.com/youtube/v3/'
 # load API_KEY from .env
-dotenv.load_dotenv()
 API_KEY = os.getenv('API_KEY')
 
 class YouTubeAPI:

@@ -3,7 +3,6 @@ import sys
 import re
 import sqlite3
 import requests
-import dotenv
 import markdown
 from time import sleep
 from datetime import datetime
@@ -16,7 +15,6 @@ API_URL = 'https://www.googleapis.com/youtube/v3/'
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
 # load API_KEY from .env
-dotenv.load_dotenv()
 API_KEY = os.getenv('API_KEY')
 
 # page functions

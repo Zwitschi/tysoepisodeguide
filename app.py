@@ -71,6 +71,7 @@ def episode(episode_id):
 def guests():
     """ 
     Guests page
+
     list of dicts with guest names and links to their episodes
     """
     return override_render_template(
@@ -82,6 +83,7 @@ def guests():
 def guest(guest_name):
     """ 
     Guest page
+
     list of dicts with guest names and links to their episodes
     """
     order = 'ASC'
@@ -100,6 +102,7 @@ def guest(guest_name):
 def about():
     """
     About page
+
     Static page with information about this project
     """
     return override_render_template(
@@ -111,6 +114,7 @@ def about():
 def update():
     """
     Update database
+    
     Checks channel and if necessary youtube API to update database
     """
     update_db()
@@ -124,6 +128,7 @@ def update():
 def license():
     """
     License page
+    
     Static page with license information
     """
     return override_render_template(
