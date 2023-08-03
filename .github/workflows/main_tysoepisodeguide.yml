@@ -71,5 +71,6 @@ jobs:
 
       - name: 'Run WSGI server with Waitress'
         run: |
+          python -m venv venv
           source ./venv/bin/activate
           python wsgi.py
