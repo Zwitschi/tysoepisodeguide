@@ -470,7 +470,7 @@ def check_video_id(video_id):
         sleep(2)
         return False
 
-def get_video_ids(channelid):
+def get_video_ids(channelid, force_update=False):
     """
     Get the video ids from the channel.
     If channel was updated in the last 24 hours, read video ids from db.
@@ -486,8 +486,9 @@ def get_video_ids(channelid):
     c = Channel(channelid)
 
     # check if channel was updated in the last 24 hours
-    if c.check_channel_update_db():
+    if c.check_channel_update_db() == False or force_update == True:
         # channel was not updated in the last 24 hours, get videos from youtube API
+        print('Getting videos from YouTube API')
         video_ids = get_youtube_video_ids(channelid)
         if video_ids == None:
             print('No videos found')
@@ -502,6 +503,7 @@ def get_video_ids(channelid):
     
     else:
         # channel was updated in the last 24 hours, get videos from db
+        print('Getting videos from database')
         video_ids = read_video_ids()
         if video_ids == None:
             print('No videos found')
@@ -612,12 +614,17 @@ def update_db():
     print(str(len(episode_details)) + ' episodes found')
 
     for e in episode_details:
+        # create episode object
         ep = Episode(e['id'], e['title'], e['url'], e['description'], e['thumb'], e['published_date'], e['duration'], e['number'])
+        # check if episode is in db
         row = read_video(e['id'])
+        # if episode is not in db, insert
         if row is None:
             insert_video(e)
+        # if episode is in db, check if details are up to date
         else:
             dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
+            # if details are not up to date, update
             if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
                 update_video(e)
 
@@ -686,7 +693,10 @@ def install():
 
 if __name__ == '__main__':
     # accept arguments 'install' or 'update'
-    if len(sys.argv) == 2:
+    # default is 'update'
+    if len(sys.argv) == 1:
+        update_db()
+    elif len(sys.argv) == 2:
         if sys.argv[1] == 'install':
             install()
         elif sys.argv[1] == 'update':
