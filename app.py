@@ -1,9 +1,5 @@
 import os
-import re
-import sqlite3
-import requests
 
-from time import sleep
 from datetime import datetime
 from flask import Flask, render_template, url_for, request
 
