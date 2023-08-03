@@ -1,3 +1,8 @@
+"""
+Setup script for TYSO episode guide.
+
+Creates the database and tables, and populates the tables with data from the YouTube API.
+"""
 import os
 import sys
 import re

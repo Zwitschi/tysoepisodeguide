@@ -1,3 +1,6 @@
+"""
+Flask app for TYSO episode guide
+"""
 import os
 import re
 import sqlite3
