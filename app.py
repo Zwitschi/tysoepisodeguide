@@ -1,6 +1,3 @@
-"""
-Flask app for TYSO episode guide
-"""
 import os
 import re
 import sqlite3
@@ -12,7 +9,6 @@ from datetime import datetime
 from flask import Flask, render_template, url_for, request
 
 from classes.episode import Episode
-from classes.youtubeapi import YouTubeAPI
 from setup import read_videos, read_video
 from setup import update_db, guest_list, load_about_content, load_license_content
 
@@ -40,6 +36,9 @@ def index():
     # get sort order from request args (if present)
     if 'sort' in request.args:
         order = request.args.get('sort', order, type = str)
+    # only allow ASC or DESC
+    if order not in ['ASC', 'DESC']:
+        order = 'ASC'
     episodes = []
     for e in read_videos(order=order):
         episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]))        
@@ -119,9 +118,11 @@ def update():
     Checks channel and if necessary youtube API to update database
     """
     update_db()
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
     return render_template(
         'about.html',
-        about='Database updated',
+        about='Database updated at {}'.format(timestamp),
         css_file=url_for('static', filename=CSS_FILE),
         icon=url_for('static', filename=ICON),
         logo=url_for('static', filename=LOGO)

@@ -12,7 +12,7 @@ dotenv.load_dotenv()
 API_KEY = os.getenv('API_KEY')
 
 class YouTubeAPI:
-    def __init__(self, api_key):
+    def __init__(self, api_key=API_KEY):
         self.api_key = api_key
         self.youtube = build('youtube', 'v3', developerKey=api_key)
 
