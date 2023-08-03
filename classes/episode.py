@@ -79,6 +79,8 @@ class Episode:
             title = 'Jon DeWalt'
         if 'Nobodies' in title:
             title = 'Hugh Davidson + Larry Dorf + Rachel Ramras'
+        if '@whitneycummings' in title:
+            title = 'Whitney Cummings'
 
         if ' - The Sleepover Series:' in title:
             title = title.split(' - The Sleepover Series:')[0]
