@@ -120,10 +120,11 @@ class Episode:
         for r in remove_list:
             if r in title:
                 title = title.replace(r, '')
-        n=1
-        while n<99:
-            title = title.replace(str(n)+'.0', '')
+        n=0
+        while n<=99:
             n+=1
+            if str(n)+'.0' in title:
+                title = title.replace(str(n)+'.0', '')
 
         # remove extra spaces
         while '  ' in title:
