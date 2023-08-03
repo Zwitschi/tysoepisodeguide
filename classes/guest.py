@@ -19,4 +19,3 @@ class Guest:
     def add_episode(self, episode):
         if episode not in self.episodes:
             self.episodes.append(episode)
-
