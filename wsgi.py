@@ -1,3 +1,5 @@
-from waitress import serve
 from app import app
-serve(app, listen='*:8088')
+
+if __name__ == '__main__':
+    from waitress import serve
+    serve(app, listen='*:5000')

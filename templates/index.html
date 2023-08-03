@@ -14,21 +14,21 @@
             <table id="episode-guide" class="table table-dark table-striped table-bordered table-hover">
                 <thead class="thead-dark">
                     <tr>
+                        <th></th>
                         <th><a href="?sort={{ order }}">Episode</a></th>
                         <th><a href="?sort={{ order }}">Date</a></th>
                         <th>Title</th>
                         <th>Guest</th>
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for e in episodes %}
                 <tr class="episode-list" id="episode-{{ e.number }}">
+                    <td><a class="episode-link" href="{{ e.url }}" target="_blank"><img class="episode-img" src="{{ e.thumb }}" title="{{ e.title }}" /></a></td>
                     <td><a class="episode-link" href="{{ e.id }}">#{{ e.number }}</a></td>
                     <td class="episode-date"><a class="episode-link" href="{{ e.id }}">{{ e.formatted_date }}</a></td>
                     <td class="episode-title"><a class="episode-link" href="{{ e.id }}">{{ e.title }}</a></td>
                     <td class="episode-guest">{% for g in e.guest %}{% if loop.index > 1 %} &dash; {% endif %} <a href="/guest/{{ g }}">{{ g }}</a> {% endfor %}</td>
-                    <td><a class="episode-link" href="{{ e.id }}"><img class="episode-img" src="{{ e.thumb }}" title="{{ e.title }}" /></a></td>
                 </tr>
                 {% endfor %}
                 </tbody>

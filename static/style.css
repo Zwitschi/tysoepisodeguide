@@ -75,6 +75,13 @@ a:hover {
     height: 50px;
     line-height: 50px;
 }
+
+#header a.nav-link {
+    font-family: 'amboy-black', sans-serif;
+    font-size: 1.6rem;
+    text-decoration: none;
+}
+
 #footer {
     font-family: 'amboy-black', sans-serif;
 }
@@ -99,12 +106,7 @@ table#episode-guide th, table#guests th {
 .episode-list .episode-guest a {
     font-family: Arial, Helvetica, sans-serif;
 }
-/*td.episode-title, td.episode-guest, td.episode-date, .episode-link {
-    vertical-align: top;
-    font-family: 'amboy-black', sans-serif;
-}*/
 td.episode-title {
-    font-size: 2.2rem;
     font-weight: bold;
 }
 td.episode-guest {
@@ -142,7 +144,6 @@ td.episode-date {
 }
 
 h2.episode-title {
-    font-size: 2.2rem;
     font-weight: bold;
     width: 100%;
     z-index: 1;
@@ -226,7 +227,6 @@ h2.episode-title {
         width: 100%;
         margin: 0;
         padding: 0;
-        font-size: 1.2rem;
     }
     th.ep-head-date, th.ep-head-duration,
     td.episode-date, td.episode-duration {

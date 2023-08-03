@@ -28,6 +28,19 @@ CSS_FILE = 'style.css'
 ICON = 'TYSO_icon.png'
 LOGO = 'TYSO_logo_1400x1400.jpg'
 
+# Functions
+def override_render_template(template, **kwargs):
+    """
+    Override the render_template function to add the css_file parameter
+    """
+    return render_template(
+        template, 
+        css_file=url_for('static', filename=CSS_FILE), 
+        icon=url_for('static', filename=ICON),
+        logo=url_for('static', filename=LOGO),
+        **kwargs
+        )
+
 # Routes
 @app.route('/')
 def index():
@@ -39,27 +52,25 @@ def index():
     # only allow ASC or DESC
     if order not in ['ASC', 'DESC']:
         order = 'ASC'
+    # create empty list for episodes
     episodes = []
+    # get episodes from database
     for e in read_videos(order=order):
-        episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]))        
-    return render_template(
+        # create Episode object from database record and append to episodes list
+        episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]))
+    # render the template
+    return override_render_template(
         'index.html', 
         episodes=episodes, 
-        css_file=url_for('static', filename=CSS_FILE), 
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO),
         order=reverse if order == 'ASC' else 'ASC'
     )
 
 @app.route('/<episode_id>')
 def episode(episode_id):
     e = read_video(episode_id)
-    return render_template(
+    return override_render_template(
         'episode.html', 
-        episode=Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]).to_dict(),
-        css_file=url_for('static', filename=CSS_FILE), 
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO)
+        episode=Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]).to_dict()
     )
 
 @app.route('/guests')
@@ -68,12 +79,9 @@ def guests():
     Guests page
     list of dicts with guest names and links to their episodes
     """
-    return render_template(
+    return override_render_template(
         'guests.html', 
-        guests=guest_list(),
-        css_file=url_for('static', filename=CSS_FILE), 
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO)
+        guests=guest_list()
     )
 
 @app.route('/guest/<guest_name>')
@@ -88,12 +96,9 @@ def guest(guest_name):
     if 'sort' in request.args:
         order = request.args.get('sort', order, type = str)
     guest = [g for g in guest_list(order=order) if g.name == guest_name][0]
-    return render_template(
+    return override_render_template(
         'guest.html', 
         guest=guest,
-        css_file=url_for('static', filename=CSS_FILE), 
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO),
         order=reverse if order == 'ASC' else 'ASC'
     )
 
@@ -103,12 +108,9 @@ def about():
     About page
     Static page with information about this project
     """
-    return render_template(
+    return override_render_template(
         'about.html',
-        about=load_about_content(),
-        css_file=url_for('static', filename=CSS_FILE), 
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO)
+        about=load_about_content()
     )
 
 @app.route('/update')
@@ -119,13 +121,9 @@ def update():
     """
     update_db()
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    return render_template(
+    return override_render_template(
         'about.html',
-        about='Database updated at {}'.format(timestamp),
-        css_file=url_for('static', filename=CSS_FILE),
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO)
+        about='Database updated at {}'.format(timestamp)
     )
 
 @app.route('/LICENSE')
@@ -134,12 +132,9 @@ def license():
     License page
     Static page with license information
     """
-    return render_template(
+    return override_render_template(
         'about.html',
-        about=load_license_content(),
-        css_file=url_for('static', filename=CSS_FILE), 
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO)
+        about=load_license_content()
     )
 
 # special route for favicon.ico in /static
