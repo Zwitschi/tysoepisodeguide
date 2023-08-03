@@ -2,7 +2,6 @@ import os
 import re
 import sqlite3
 import requests
-from dotenv import load_dotenv
 
 from time import sleep
 from datetime import datetime
@@ -13,10 +12,6 @@ from setup import read_videos, read_video
 from setup import update_db, guest_list, load_about_content, load_license_content
 
 # load API_KEY from .env
-# Load environment variables from .env file
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
 API_KEY = os.getenv('API_KEY')
 
 # Constants
