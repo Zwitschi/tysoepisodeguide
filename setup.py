@@ -9,6 +9,7 @@ from time import sleep
 from datetime import datetime
 
 from classes.episode import Episode
+from classes.channel import Channel
 from classes.guest import Guest
 
 API_URL = 'https://www.googleapis.com/youtube/v3/'
@@ -165,7 +166,7 @@ def read_channel(channel_id):
         return channel
     else:
         return None
-    
+
 def check_channel_update(channelid):
     """
     Check if the channel was updated in the last 24 hours
@@ -184,20 +185,7 @@ def check_channel_update(channelid):
             return True
         else:
             return False
-        
-def update_channel(channel):
-    """
-    Update channel in database
-
-    Args:
-        channel (dict): channel details
-    """
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('UPDATE channels SET last_updated = ? WHERE id = ?', (channel['last_updated'], channel['id']))
-    conn.commit()
-    conn.close()
-
+    
 def insert_video(video):
     """
     Insert video into database
@@ -207,10 +195,7 @@ def insert_video(video):
     """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('''
-        INSERT INTO videos (id, title, url, description, thumb, published_date, duration, number)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (video['id'], video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number']))
+    c.execute('INSERT INTO videos (id, title, url, description, thumb, published_date, duration, number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (video['id'], video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number']))
     conn.commit()
     conn.close()
 
@@ -223,11 +208,7 @@ def update_video(video):
     """
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('''
-        UPDATE videos
-        SET title = ?, url = ?, description = ?, thumb = ?, published_date = ?, duration = ?, number = ?
-        WHERE id = ?
-    ''', (video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number'], video['id']))
+    c.execute('UPDATE videos SET title = ?, url = ?, description = ?, thumb = ?, published_date = ?, duration = ?, number = ? WHERE id = ?', (video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number'], video['id']))
     conn.commit()
     conn.close()
 
@@ -576,6 +557,19 @@ def get_channel_details(channel_id):
         'last_updated': datetime.now().timestamp()
     }
     return channel
+
+def update_channel(channel):
+    """
+    Update the channel details in the database
+
+    Args:
+        channel (dict): the channel details
+    """
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('UPDATE channels SET last_updated = ? WHERE id = ?', (channel['last_updated'], channel['id']))
+    conn.commit()
+    conn.close()    
 
 def get_episodes(video_ids):
     """

@@ -216,6 +216,9 @@ h2.episode-title {
 }
 
 @media screen and (max-width: 400px) {
+    #header, #content, #footer {
+        margin-bottom: 0;
+    }
     #header-img {
         display: none;
     }
