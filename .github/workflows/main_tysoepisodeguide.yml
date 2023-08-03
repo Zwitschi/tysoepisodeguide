@@ -71,4 +71,4 @@ jobs:
 
       - name: 'Run WSGI server with Waitress'
         run: |
-          python wsgi.py
+          ./venv/bin/waitress-serve --listen=*:8000 --call 'tysoepisodeguide:app'
