@@ -68,7 +68,3 @@ jobs:
           app-name: 'tysoepisodeguide'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_537FDFE958014CDFA71874EBD1F63F6F }}
-
-      - name: 'Run WSGI server with Waitress'
-        run: |
-          python app.py
