@@ -10,14 +10,8 @@ body {
     background-color: #000;
     color: #fff;
 }
-.container {
-    padding: 0;
-}
 .row {
     margin: 0;
-}
-.col-12 {
-    padding: 0;
 }
 
 /* font amboy from amboy.woff */
@@ -31,25 +25,46 @@ body {
 /* format headers in yellow */
 h1, h2, h3, h4, h5, h6 {
     color: #ff0;
-    font-family: 'amboy-black', sans-serif;
 }
 
 /* format all links in yellow */
 a {
     color: #ff0;
-    font-family: 'amboy-black', sans-serif;
 }
 
 a:hover {
     color: #fff;
 }
 
+/* all elements with amboy-black font */
+a, h1, h2, h3, h4, h5, h6, 
+#header a.nav-link, 
+#footer,
+table#episode-guide th, 
+table#guests th
+{
+    font-family: 'amboy-black', sans-serif;
+}
+
+#header, #content, #footer {
+    margin: 0 1em;
+}
 #header {
     color: #fff;
     padding: 0;
     margin-bottom: 1em;
 }
+#content {
+    padding: auto;
+}
 
+#footer {
+    font-size: 1rem;
+    background-color: #000;
+    height: 1.5rem;
+}
+
+/** header **/
 #header h1 {
     display: inline-block;
     font-weight: bold;
@@ -77,13 +92,12 @@ a:hover {
 }
 
 #header a.nav-link {
-    font-family: 'amboy-black', sans-serif;
     font-size: 1.6rem;
     text-decoration: none;
 }
 
-#footer {
-    font-family: 'amboy-black', sans-serif;
+#content h1 {
+    font-size: 1.8rem;
 }
 
 /** formatting for index.html **/
@@ -91,85 +105,81 @@ table#episode-guide, table#guests {
     margin-top: .5em;
 }
 table#episode-guide th, table#guests th {
-    font-family: 'amboy-black', sans-serif;
     font-size: 1.2rem;
 }
-.episode-list {
-    width: 100%;
+tr.ep-row, tr.guest-row {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.25rem;
 }
-.episode-list img {
-    max-width: 200px;
+.ep-thumb, .ep-row img {
+    width: 200px;
 }
-.episode-list .episode-title {
-    font-size: 1.2rem;
-}
-.episode-list .episode-guest a {
+.ep-row .ep-guest a {
     font-family: Arial, Helvetica, sans-serif;
 }
-td.episode-title {
+
+td.ep-title {
     font-weight: bold;
 }
-td.episode-guest {
+td.ep-guest {
     font-weight: normal;
-    font-size: 1.2rem;
     flex-wrap: wrap;
 }
-td.episode-date {
+td.ep-date {
     text-align: right;
     font-weight: normal;
-    font-size: 1.2rem;
 }
-.episode-link {
+.ep-link {
     font-family: Arial, Helvetica, sans-serif;
     vertical-align: top;
     text-decoration: none;
     font-weight: normal;
 }
 
-#guest .episode-img {
+#guest .ep-img {
     display: inline-block;
     height: 144px;
 }
 
 /** formatting for episode.html **/
-.episode .episode-details {
+.episode .ep-details {
     margin-top: 1em;
     font-family: 'amboy-black', sans-serif;
 }
 
-.episode .episode-link {
+.episode .ep-link {
     font-family: Arial, Helvetica, sans-serif;
     font-weight: normal;
     font-size: 1.2rem;
 }
 
-h2.episode-title {
+h2.ep-title {
     font-weight: bold;
     width: 100%;
     z-index: 1;
 }
 
-.episode .episode-title {
+.episode .ep-title {
     text-decoration: underline;
 }
 
-.episode .episode-title:hover {
+.episode .ep-title:hover {
     color: #fff;
 }
 
-.episode a.episode-link:hover {
+.episode a.ep-link:hover {
     color: #fff;
 }
 
-.episode .episode-number {
+.episode .ep-number {
     font-family: 'amboy-black', sans-serif;
 }
 
-.episode-description {
+.ep-description {
     margin-top: 1em;
 }
 
-.episode-description a {
+.ep-description a {
     font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -184,7 +194,7 @@ h2.episode-title {
     text-decoration: none;
 }
 
-.guest-list .episode-link {
+.guest-list .ep-link {
     font-family: Arial, Helvetica, sans-serif;
     font-weight: normal;
     font-size: 1.2rem;
@@ -205,20 +215,29 @@ h2.episode-title {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-#content {
-    margin-bottom: 1rem;
+/** Overrides for table columns **/
+.table-striped > tbody > tr:nth-of-type(2n+1) > .ep-thumb {
+    --bs-table-accent-bg: #000;
+    color: #000;
 }
-#footer {
-    font-family: 'amboy-black', sans-serif;
-    font-size: 1.2rem;
+.table-dark {
+	--bs-table-border-color: #000;
+}
+.table-hover > tbody > tr:hover > .ep-thumb {
+	--bs-table-accent-bg: #000;
+	color: #000;
+}
+.ep-thumb {
     background-color: #000;
-    height: 1.5rem;
-    margin: 1.5rem auto 0 auto;
 }
+.table > :not(caption) > * > .ep-thumb {
+	background-color: #000;
+}
+
 
 @media screen and (max-width: 400px) {
     #header, #content, #footer {
-        margin-bottom: 0;
+        margin: 0;
     }
     #header-img {
         display: none;
@@ -229,7 +248,7 @@ h2.episode-title {
         padding: 0;
     }
     th.ep-head-date, th.ep-head-duration,
-    td.episode-date, td.episode-duration {
+    td.ep-date, td.ep-duration {
         display: none;
     }
     #header-nav {
@@ -241,27 +260,25 @@ h2.episode-title {
         margin-right: 1em;
         padding: 0;
     }
-    .episode-list img {
-        
+    .ep-row img {
         max-height: 2.5em;
     }
 
-    .episode-img {
+    .ep-img {
         float: none;
         margin-left: 0;
-        max-width: 100%;
     }
 
-    .episode-link {
+    .ep-link {
         font-size: 1em;
         line-height: 1em;
     }
 
-    h2.episode-title {
+    h2.ep-title {
         font-size: 1.6rem;
     }
 
-    .episode .episode-img {
+    .episode .ep-img {
         display: block;
         margin-right: 0;
         position: relative;

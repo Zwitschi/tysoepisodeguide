@@ -9,25 +9,27 @@
     <meta name="twitter:title" content="Guests - Take Your Shoes Off with Rick Glassman" />
 {% endblock %}
 {% block content %}
-        <div class="col-12">
-            <h1>All Guests</h1>
-            <table id="guests" class="table table-dark table-striped table-bordered table-hover">
-                <thead class="thead-dark">
-                    <tr>
-                        <th>Guest Name(s)</th>
-                        <th>Episode(s)</th>
-                    </tr>
-                </thead>
-                {% for guest in guests %}
-                <tr class="guest-list" id="guest-{{ guest.id }}">
-                    <td class="guest-name"><a class="guest-link" href="guest/{{ guest.name }}">{{ guest.name }}</a></td>
-                    <td class="guest-episodes">
-                    {% for e in guest.episodes %}
-                    {% if loop.index > 1 %} &dash; {% endif %}<a id="episode-{{ e.id }}" class="episode-link" href="{{ e.id }}">#{{ e.number }}</a>
-                    {% endfor %}
-                    </td>
+<div class="row justify-content-center">
+    <div class="col-12">
+        <h1>All Guests</h1>
+        <table id="guests" class="table table-dark table-striped table-bordered table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Guest</th>
+                    <th>Episode(s)</th>
                 </tr>
+            </thead>
+            {% for guest in guests %}
+            <tr class="guest-list">
+                <td class="guest-name"><a id="guest-{{ guest.id }}" class="guest-link" href="guest/{{ guest.name }}">{{ guest.name }}</a></td>
+                <td class="guest-episodes">
+                {% for e in guest.episodes %}
+                {% if loop.index > 1 %} &dash; {% endif %}<a id="episode-{{ e.id }}" class="ep-link" href="{{ e.id }}">#{{ e.number }}</a>
                 {% endfor %}
-            </table>
-        </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 {% endblock %}

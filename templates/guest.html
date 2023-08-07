@@ -9,32 +9,34 @@
     <meta name="twitter:title" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
 {% endblock %}
 {% block content %}
-        <div class="col-12">
-            <div id="guest">
-                <h1 id="guest-name">{{ guest.name }}</h1>
-                <p>All appearances of {{ guest.name }} on Take Your Shoes Off</p>
-                <div id="guest-episodes">
-                    <table class="table table-dark table-striped table-bordered table-hover">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th><a href="/guest/{{ guest.name }}?sort={{ order }}">Episode</a></th>
-                                <th><a href="/guest/{{ guest.name }}?sort={{ order }}">Date</a></th>
-                                <th>Title</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for e in guest.episodes %}
-                            <tr>
-                                <td><a id="episode-{{ e.id }}" class="episode-link" href="{{ e.url }}" target="_blank"><img class="episode-img" src="{{ e.thumb }}" title="{{ e.title }}" alt="{{ e.title }}" /></a>
-                                <td><a id="episode-{{ e.id }}" class="episode-link" href="/{{ e.id }}">#{{ e.number }}</a></td>
-                                <td><a id="episode-{{ e.id }}" class="episode-link" href="/{{ e.id }}">{{ e.formatted_date }}</a></td>
-                                <td><a id="episode-{{ e.id }}" class="episode-link" href="/{{ e.id }}">{{ e.title }}</a></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div id="guest">
+            <h1 id="guest-name">{{ guest.name }}</h1>
+            <p>All appearances of {{ guest.name }} on Take Your Shoes Off</p>
+            <div id="guest-episodes">
+                <table class="table table-dark table-striped table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th class="ep-thumb"></th>
+                            <th><a href="/guest/{{ guest.name }}?sort={{ order }}">Episode</a></th>
+                            <th><a href="/guest/{{ guest.name }}?sort={{ order }}">Date</a></th>
+                            <th>Title</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in guest.episodes %}
+                        <tr class="ep-row">
+                            <td class="ep-thumb"><a id="episode-{{ e.id }}" class="ep-link" href="{{ e.url }}" target="_blank"><img class="ep-img" src="{{ e.thumb }}" title="{{ e.title }}" alt="{{ e.title }}" /></a>
+                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/{{ e.id }}">#{{ e.number }}</a></td>
+                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/{{ e.id }}">{{ e.formatted_date }}</a></td>
+                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/{{ e.id }}">{{ e.title }}</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
+</div>
 {% endblock %}

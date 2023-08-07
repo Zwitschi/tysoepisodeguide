@@ -2,15 +2,13 @@
 <html lang="en">
 {% include '_head.html' %}
 <body>
-<div id="header" class="container">
+<div id="header">
 {% include '_nav.html' %}
 </div>
-<div id="content" class="container">
-    <div class="row justify-content-center">
+<div id="content">
 {% block content %}{% endblock %}
-    </div>
 </div>
-<div id="footer" class="container">
+<div id="footer">
 {% block footer %}
 &copy; 2023 TYSO Episode Guide by <a href="https://zwitschi.net/" target="_blank">Zwitschi</a> for <a href="https://www.rickglassman.com/" target="_blank">Take Your Shoes Off with Rick Glassman</a>
 {% endblock %}
