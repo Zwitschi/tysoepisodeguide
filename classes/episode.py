@@ -1,19 +1,3 @@
-"""
-Episode class
-
-This class is used to create an episode object. It has the following attributes:
-    - id: string
-    - title: string
-    - url: string
-    - description: string
-    - thumb: string
-    - published_date: string
-    - duration: int
-    - number: int
-    - formatted_date: string
-    - formatted_description: string
-    - guest: list of strings
-"""
 import re
 from datetime import datetime
 

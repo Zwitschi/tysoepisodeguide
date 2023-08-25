@@ -1,26 +1,18 @@
 import os
-
 from datetime import datetime
 from flask import Flask, render_template, url_for, request
-
 from classes.episode import Episode
-from setup import read_videos, read_video
-from setup import update_db, guest_list, load_about_content, load_license_content
+from utils.database import read_videos, read_video, update_db
+from setup import guest_list, load_about_content, load_license_content
 
-# load API_KEY from .env
 API_KEY = os.getenv('API_KEY')
-
-# Constants
 API_URL = 'https://www.googleapis.com/youtube/v3/'
-
 BASE_DIR = os.getcwd()
-DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
-
-app = Flask(__name__)
-
 CSS_FILE = 'style.css'
 ICON = 'TYSO_icon.png'
 LOGO = 'TYSO_logo_1400x1400.jpg'
+
+app = Flask(__name__)
 
 # Functions
 def override_render_template(template, **kwargs):
@@ -143,4 +135,4 @@ def favicon():
     
 if __name__ == '__main__':
     # Run the app
-    app.run()
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -21,16 +21,23 @@ This python program is used to generate the episode guide from the YouTube chann
 
 * [Python 3.11+](https://www.python.org/downloads/)
 * [YouTube Data API key](https://developers.google.com/youtube/v3/getting-started)
-
 ## Usage
 
 1. Clone the repository
 2. Install the requirements with `pip install -r requirements.txt`
-3. Create a `.env` file in the root directory of the repository
-4. Add the following to the `.env` file: `API_KEY=<your_api_key>`
-5. Run `python setup.py install` to generate the episode guide
-6. Run `python app.py` to run the Flask app
-7. Open `http://127.0.0.1:5000/` in a browser to view the episode guide
+3. Create and enable a virtual environment (venv) named "tyso" using the following steps:
+    - Open a terminal or command prompt.
+    - Navigate to the root directory of the repository using the `cd` command.
+    - Run the command `python -m venv tyso` to create a virtual environment named "tyso".
+    - On Windows, activate the virtual environment by running: 
+      - For Command Prompt: `tyso\Scripts\activate.bat`
+      - For PowerShell: `.\tyso\Scripts\Activate.ps1`
+    - On macOS and Linux, activate the virtual environment by running: `source tyso/bin/activate`
+4. Create a `.env` file in the root directory of the repository.
+5. Add the following to the `.env` file: `API_KEY=<your_api_key>`
+6. Run `python setup.py install` to generate the episode guide.
+7. Run `python app.py` to run the Flask app.
+8. Open `http://127.0.0.1:5000/` in a browser to view the episode guide.
 
 ## Contributions
 
@@ -39,14 +46,16 @@ To contribute, use the following steps:
 
 1. Clone the repository
 2. Install the requirements with `pip install -r requirements.txt`
-3. Create a `.env` file in the root directory of the repository
-4. Add the following to the `.env` file: `API_KEY=<your_api_key>`
-5. Run `python setup.py install` to generate the episode guide
-6. Make your changes
-7. Run `python setup.py install` to generate the episode guide
-8. Run `python app.py` to run the Flask app
-9. Open `http://127.0.0.1:5000/` in a browser to view the episode guide
-10. Submit a pull request
+3. Create and enable a virtual environment (venv) named "tyso" using the steps mentioned above.
+4. Create a `.env` file in the root directory of the repository.
+5. Add the following to the `.env` file: `API_KEY=<your_api_key>`
+6. Run `python setup.py install` to generate the episode guide.
+7. Make your changes.
+8. Run `python app.py` to run the Flask app and test your changes.
+9. Open `http://127.0.0.1:5000/` in a browser to view the episode guide and ensure your changes work as expected.
+10. Submit a pull request, describing the changes you've made and any relevant information.
+
+By following these steps, you can create a virtual environment, set up the necessary environment variables, and contribute to the project while maintaining a clean and isolated development environment.
 
 ## License
 
