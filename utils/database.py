@@ -50,7 +50,6 @@ def read_channel() -> dict:
     c.execute("SELECT * FROM channels WHERE id = 'UCYCGsNTvYxfkPkfQopRMP7w'")
     row = c.fetchone()
     conn.close()
-    # transform row into dict
     if row:
         channel = {
             'id': row[0],
@@ -77,6 +76,14 @@ def update_video(video: dict) -> None:
     c.execute('UPDATE videos SET title = ?, url = ?, description = ?, thumb = ?, published_date = ?, duration = ?, number = ? WHERE id = ?', (video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number'], video['id']))
     conn.commit()
     conn.close()
+    
+def update_video_number(video_id: str, number: str) -> None:
+    """Update video number in database"""
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('UPDATE videos SET number = ? WHERE id = ?', (number, video_id))
+    conn.commit()
+    conn.close()
 
 def read_video_ids() -> list:
     """Read all video ids from database"""
@@ -84,7 +91,6 @@ def read_video_ids() -> list:
     c = conn.cursor()
     c.execute('SELECT id FROM videos')
     rows = c.fetchall()
-    # only 1 item in each row, transform to list
     rows = [r[0] for r in rows]
     conn.close()
     return rows
@@ -100,12 +106,9 @@ def read_video(video_id: str) -> list:
 
 def create_db() -> None:
     """Create database file"""
-    print('Creating db file')
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('''SELECT * FROM sqlite_master WHERE type='table' ''')
-    tables = c.fetchall()
-    print('Found ' + str(len(tables)) + ' tables')
     conn.close()
               
 def create_tables() -> None:
@@ -121,7 +124,6 @@ def create_tables() -> None:
         last_updated TEXT
     )
     ''')
-    print('Creating channels table')
     c.execute('''
     CREATE TABLE IF NOT EXISTS videos (
         id TEXT PRIMARY KEY, 
@@ -134,29 +136,14 @@ def create_tables() -> None:
         number TEXT 
     )
     ''')
-    print('Creating videos table')
     conn.commit()
     conn.close()
 
 def install() -> None:
-    """
-    Install the database and create the tables if needed.
-    """
-    # bit to check if installation has been done before
-    is_installed = False
+    """Install the database and create the tables if needed."""
     # create db folder if not exists
     if not os.path.exists(os.path.join(BASE_DIR, 'db')):
         # create db folder
-        print('Creating db folder')
         os.makedirs(os.path.join(BASE_DIR, 'db'))
-    else:
-        is_installed = True
-        
     if not os.path.exists(DB_FILE):
         create_tables()
-        print('Database created')
-    else:
-        is_installed = True
-    
-    if is_installed:
-        print('Installation complete')

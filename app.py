@@ -1,31 +1,27 @@
-import os
 from datetime import datetime
 from flask import Flask, render_template, url_for, request
 from classes.episode import Episode
-from utils.database import read_videos, read_video, update_db
-from setup import guest_list, load_about_content, load_license_content
+from utils.database import read_videos, read_video
+from setup import update_db, guest_list, load_about_content, load_license_content
 
-API_KEY = os.getenv('API_KEY')
-API_URL = 'https://www.googleapis.com/youtube/v3/'
-BASE_DIR = os.getcwd()
+# static file constants
 CSS_FILE = 'style.css'
 ICON = 'TYSO_icon.png'
 LOGO = 'TYSO_logo_1400x1400.jpg'
 
+# Flask app
 app = Flask(__name__)
 
 # Functions
 def override_render_template(template, **kwargs):
-    """
-    Override the render_template function to add the css_file parameter
-    """
+    "Override the render_template function to add the css_file parameter"
     return render_template(
         template, 
         css_file=url_for('static', filename=CSS_FILE), 
         icon=url_for('static', filename=ICON),
         logo=url_for('static', filename=LOGO),
         **kwargs
-        )
+    )
 
 # Routes
 @app.route('/')
@@ -61,11 +57,6 @@ def episode(episode_id):
 
 @app.route('/guests')
 def guests():
-    """ 
-    Guests page
-
-    list of dicts with guest names and links to their episodes
-    """
     return override_render_template(
         'guests.html', 
         guests=guest_list()
@@ -73,11 +64,6 @@ def guests():
 
 @app.route('/guest/<guest_name>')
 def guest(guest_name):
-    """ 
-    Guest page
-
-    list of dicts with guest names and links to their episodes
-    """
     order = 'ASC'
     reverse = 'DESC'
     # get sort order from request args (if present)
@@ -92,40 +78,25 @@ def guest(guest_name):
 
 @app.route('/about')
 def about():
-    """
-    About page
-
-    Static page with information about this project
-    """
     return override_render_template(
         'about.html',
         about=load_about_content()
     )
 
+@app.route('/LICENSE')
+def license():
+    return override_render_template(
+        'about.html',
+        about=load_license_content()
+    )
+
 @app.route('/update')
 def update():
-    """
-    Update database
-    
-    Checks channel and if necessary youtube API to update database
-    """
     update_db()
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     return override_render_template(
         'about.html',
-        about='Database updated at {}'.format(timestamp)
-    )
-
-@app.route('/LICENSE')
-def license():
-    """
-    License page
-    
-    Static page with license information
-    """
-    return override_render_template(
-        'about.html',
-        about=load_license_content()
+        about='<h1>Update complete</h1><p>Database updated at {}</p>'.format(timestamp)
     )
 
 # special route for favicon.ico in /static
@@ -135,4 +106,4 @@ def favicon():
     
 if __name__ == '__main__':
     # Run the app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run()

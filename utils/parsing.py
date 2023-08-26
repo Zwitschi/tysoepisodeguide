@@ -39,18 +39,19 @@ def is_episode(episode_title: str, duration: int):
     else:
         return False
 
-def get_episode_number(video_title: str) -> int:
+def get_episode_number(video_title: str) -> str:
     """Get the episode number from the video title"""
     # Create an episode number variable
     episode_number = 0
     # exceptions
-    if not '#' in video_title and 'Balcony Series' in video_title:
+    if '#' not in video_title and 'Balcony Series' in video_title:
         # try to get the episode number from the title with regex, only consider numbers and . 
         episode_number = re.findall(r'[\d\.]+', video_title)
         if len(episode_number) > 0:
+            # get the first match
             episode_number = episode_number[0]
     elif '#' not in video_title and '50th' in video_title:
-        episode_number = 50
+        return 50
     elif 'BEST OF' in video_title or 'PATREON UNLOCKED' in video_title:
         return 0
     else:
@@ -62,11 +63,14 @@ def get_episode_number(video_title: str) -> int:
         episode_number = episode_number.replace(' pt ','.')    
         # shorten
         episode_number = episode_number.split(' ')[0]
-    if episode_number == 0 or episode_number == 50:
+    
+    # check if episode number is 0
+    if episode_number == 0:
         return episode_number
     elif '.' in episode_number:
         # if number contains a '.' then cast as float
         episode_number = float(episode_number)
     else:
+        # cast as int
         episode_number = int(episode_number)
-    return episode_number
+    return str(episode_number)

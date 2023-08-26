@@ -6,8 +6,9 @@ from datetime import datetime
 from classes.episode import Episode
 from classes.channel import Channel
 from classes.guest import Guest
-from utils.api import api_call, build_url
-from utils.database import read_channel, insert_channel, read_video, insert_video, update_video, read_videos, read_video_ids, install
+from utils.api import api_call, build_url, build_video_url
+from utils.database import insert_channel, insert_video, install
+from utils.database import read_channel, read_video, update_video, update_video_number, read_videos, read_video_ids
 from utils.parsing import parse_duration, is_episode, get_episode_number
 from utils.timing import sleep_with_delay
 
@@ -76,10 +77,12 @@ def guest_list(order: str = 'ASC') -> list:
 
 def get_youtube_video_ids() -> list:
     """Get the video ids from the channel via API call"""
-    channel_url = build_url('channel')
+    channel_url = build_url('videos')
     res_json = api_call(channel_url)
     items = res_json['items']
-    video_ids = [item['id']['videoId'] for item in items]
+    video_ids = []
+    for item in items:
+        video_ids.append(item['id']['videoId'])
     next_page_token = res_json['nextPageToken']
     sleep_with_delay(2)
     while next_page_token:
@@ -98,7 +101,7 @@ def get_youtube_video_ids() -> list:
 
 def get_youtube_video(video_id: str) -> dict:
     """Get video and its details from the YouTube API"""
-    video_url = build_url('video_detail', video_id)
+    video_url = build_video_url('video_detail', video_id)
     res_json = api_call(video_url)
     return {
         'id': video_id,
@@ -116,12 +119,11 @@ def get_video_duration(video_id: str) -> dict:
     # Create a video duration dictionary
     video_duration = {}
     # Get the video url from the video id
-    video_url = build_url('details', video_id)
+    video_url = build_video_url('details', video_id)
     # read page info
     pagedata = api_call(video_url)
     # check if there are any results, if not, abort
     if len(pagedata['items']) == 0:
-        print('Error: no video found for id ' + video_id)
         return
     # get the video duration
     video_duration['duration'] = pagedata['items'][0]['contentDetails']['duration']
@@ -135,7 +137,6 @@ def get_episode_yt(video_id: str) -> dict:
     res = api_call(video_url)
     # check if there are any results, if not, abort
     if len(res['items']) == 0:
-        print('Error: no video found for id ' + video_id)
         return {}
     # Check if video is an episode
     if not is_episode(
@@ -173,6 +174,11 @@ def check_video_id(video_id: str) -> bool:
             video = get_youtube_video(video_id)
             update_video(video)
             sleep(2)
+        elif video[7] == '0' and is_episode(video[1], video[6]):
+            # get episode number from title
+            number = get_episode_number(video[1])
+            # update episode number
+            update_video_number(video_id, number)
         return True
     else:
         # get video info
@@ -218,7 +224,7 @@ def get_video_ids(force_update:bool=False) -> list:
 
 def get_channel_details(channel_id: str) -> dict:
     """Query the YouTube API for the channel details"""
-    channel_url = build_url('channel_detail', channel_id)
+    channel_url = build_url('channel')
     res_json = api_call(channel_url)
     return {
         'id': channel_id,
@@ -246,7 +252,7 @@ def get_episodes(video_ids: list) -> list:
             episode_details.append(video_detail)
     return episode_details
 
-def update_db() -> None:
+def update_db(force: bool = False) -> None:
     """
     Initialise the database and create the tables if needed.
     Check the channel details for updates.
@@ -259,12 +265,11 @@ def update_db() -> None:
 
     # If there is no record yet, query youtube API and save details
     if channel_details is None:
-        print('New channel details')
         channel_details = get_channel_details('UCYCGsNTvYxfkPkfQopRMP7w')
-        insert_channel('UCYCGsNTvYxfkPkfQopRMP7w')
+        insert_channel(channel_details)
     
     # Get the video ids from the channel id
-    video_ids = get_video_ids()
+    video_ids = get_video_ids(force_update=force)
 
     # print the number of videos found
     print(str(len(video_ids)) + ' videos found')
@@ -303,8 +308,13 @@ def main(*args):
             install()
         elif args[0] == 'update':
             update_db()
+        elif args[0] == 'force':
+            update_db(force=True)
+    elif len(args) == 2:
+        if args[0] == 'update' and args[1] == 'force':
+            update_db(force=True)
     else:
-        print('Usage: python setup.py [install|update]')
+        print('Usage: python setup.py [install|update [force]|force]')
         sys.exit(1)
 
 if __name__ == '__main__':

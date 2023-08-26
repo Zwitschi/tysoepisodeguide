@@ -128,7 +128,6 @@ class Episode:
         """
         # Create an episode number variable
         episode_number = 0
-
         # exceptions
         if '#' not in self.title and 'Balcony Series' in self.title:
             # try to get the episode number from the title with regex, only consider numbers and . 
@@ -153,7 +152,6 @@ class Episode:
             episode_number = episode_number.replace(' pt ','.')    
             # shorten
             episode_number = episode_number.split(' ')[0]
-        
         if episode_number == 0 or episode_number == 50:
             return episode_number
         elif '.' in episode_number:
@@ -161,7 +159,6 @@ class Episode:
             episode_number = float(episode_number)
         else:
             episode_number = int(episode_number)
-
         print(self.title)
         print(episode_number)
         return episode_number
@@ -169,7 +166,6 @@ class Episode:
     def get_guest(self):
         # create a list of guests
         guests = []
-
         title = self.clean_title()
         title = title.replace(' & ', ' + ')
         title = title.replace(' and ', ' + ')
@@ -181,11 +177,9 @@ class Episode:
             # check if any other spliton is in any element of guest_split
             for g in guest_split:
                 guests.append(g.strip())
-
         # if no + or & in title, add title to guests list
         if len(guests) == 0:
             guests.append(title.strip())
-        
         return guests
 
     def format_description(self):
