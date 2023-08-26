@@ -1,6 +1,6 @@
 # Episode Guide for the Take Your Shoes Off podcast
 
-This is an episode guide for the Take Your Shoes Off podcast with Rick Glassman. The episode guide is available at [https://tysoepisodeguide.azurewebsites.net/](https://tysoepisodeguide.azurewebsites.net/). It is still a work in progress.
+This is an episode guide for the Take Your Shoes Off podcast with Rick Glassman. The episode guide is available at [https://tysoepisodeguide.azurewebsites.net/](https://tysoepisodeguide.azurewebsites.net/).
 
 ## Sources
 
