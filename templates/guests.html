@@ -21,10 +21,10 @@
             </thead>
             {% for guest in guests %}
             <tr class="guest-list">
-                <td class="guest-name"><a id="guest-{{ guest.id }}" class="guest-link" href="guest/{{ guest.name }}">{{ guest.name }}</a></td>
+                <td class="guest-name"><a id="guest-{{ guest.id }}" class="guest-link" href="/guest/{{ guest.name }}">{{ guest.name }}</a></td>
                 <td class="guest-episodes">
                 {% for e in guest.episodes %}
-                {% if loop.index > 1 %} &dash; {% endif %}<a id="episode-{{ e.id }}" class="ep-link" href="{{ e.id }}">#{{ e.number }}</a>
+                {% if loop.index > 1 %} &dash; {% endif %}<a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.id }}">#{{ e.number }}</a>
                 {% endfor %}
                 </td>
             </tr>

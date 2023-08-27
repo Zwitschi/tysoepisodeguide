@@ -27,10 +27,10 @@
                     <tbody>
                         {% for e in guest.episodes %}
                         <tr class="ep-row">
-                            <td class="ep-thumb"><a id="episode-{{ e.id }}" class="ep-link" href="{{ e.url }}" target="_blank"><img class="ep-img" src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" alt="{{ e.title }}" /></a>
-                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/{{ e.id }}">#{{ e.number }}</a></td>
-                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/{{ e.id }}">{{ e.formatted_date }}</a></td>
-                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/{{ e.id }}">{{ e.title }}</a></td>
+                            <td class="ep-thumb"><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.url }}" target="_blank"><img class="ep-img" src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" alt="{{ e.title }}" /></a>
+                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.id }}">#{{ e.number }}</a></td>
+                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.id }}">{{ e.formatted_date }}</a></td>
+                            <td><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.id }}">{{ e.title }}</a></td>
                         </tr>
                         {% endfor %}
                     </tbody>

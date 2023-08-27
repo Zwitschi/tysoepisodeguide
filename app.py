@@ -1,7 +1,10 @@
 from datetime import datetime
-from flask import Flask, render_template, url_for, request
+import json
+import os
+from flask import Flask, render_template, request
 from classes.episode import Episode
 from utils.database import read_videos, read_video
+from utils.images import Images
 from setup import update_db, guest_list, load_about_content, load_license_content
 
 # Flask app
@@ -31,7 +34,7 @@ def index():
         order=reverse if order == 'ASC' else 'ASC'
     )
 
-@app.route('/<episode_id>')
+@app.route('/episode/<episode_id>')
 def episode(episode_id):
     e = read_video(episode_id)
     return render_template(
@@ -83,11 +86,25 @@ def update():
         about='<h1>Update complete</h1><p>Database updated at {}</p>'.format(timestamp)
     )
 
-# special route for favicon.ico in /static
-@app.route('/favicon.ico')
-def favicon():
-    return url_for('static', filename='favicon.ico')
-    
+@app.route('/images')
+def images():
+    # load all images from the images folder
+    images = os.listdir(os.path.join(os.path.dirname(__file__), 'static/thumbs'))
+    for i, image in enumerate(images):
+        # get the relative path to the image
+        images[i] = '/thumbs/' + image
+    return json.dumps(images)
+
+@app.route('/images/<image_name>')
+def image(image_name):
+    # load all images from the images folder in base64 format
+    images = Images().images
+    for image in images:
+        if image_name == image.image:
+            return image.data
+    return None
+
+# Run the app    
 if __name__ == '__main__':
     # Run the app
     app.run()
