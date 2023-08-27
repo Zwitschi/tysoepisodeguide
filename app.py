@@ -10,10 +10,7 @@ app = Flask(__name__, static_url_path='', static_folder='static', template_folde
 # Functions
 def override_render_template(template, **kwargs):
     "Override the render_template function to add the css_file parameter"
-    return render_template(
-        template, 
-        **kwargs
-    )
+    return render_template(template, **kwargs)
 
 # Routes
 @app.route('/')

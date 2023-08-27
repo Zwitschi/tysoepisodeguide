@@ -12,7 +12,7 @@ class API:
         self.api_key = os.getenv('API_KEY')
         self.url = self.build_url()
         self.data = self.api_call()
-        
+
     def api_call(self) -> dict:
         """Make an API call to the YouTube API"""
         res = requests.get(self.url)
@@ -20,7 +20,7 @@ class API:
             print('Error: ' + str(res.status_code) + ' - ' + res.content.decode('utf-8'))
             return
         return res.json()
-    
+
     def build_url(self) -> str:
         videos_url = self.url + 'search?part=snippet&channelId=' + self.channel_id + '&maxResults=50&order=date&type=video&key=' + self.api_key
         channel_url = self.url + 'channels?part=snippet,contentDetails&id=' + self.channel_id + '&key=' + self.api_key
