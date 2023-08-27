@@ -6,7 +6,7 @@ from datetime import datetime
 from classes.episode import Episode
 from classes.channel import Channel
 from classes.guest import Guest
-from utils.api import api_call, build_url, build_video_url
+from utils.api import API
 from utils.database import insert_channel, insert_video, install
 from utils.database import read_channel, read_video, update_video, update_video_number, read_videos, read_video_ids
 from utils.parsing import parse_duration, is_episode, get_episode_number
@@ -77,17 +77,17 @@ def guest_list(order: str = 'ASC') -> list:
 
 def get_youtube_video_ids() -> list:
     """Get the video ids from the channel via API call"""
-    channel_url = build_url('videos')
-    res_json = api_call(channel_url)
-    items = res_json['items']
+    api = API('videos')
+    items = api.data['items']
     video_ids = []
     for item in items:
-        video_ids.append(item['id']['videoId'])
-    next_page_token = res_json['nextPageToken']
-    sleep_with_delay(2)
-    while next_page_token:
-        next_page_url = channel_url + '&pageToken=' + next_page_token
-        next_page_res_json = api_call(next_page_url)
+        video_id = item['id']['videoId']
+        if video_id not in video_ids:
+            video_ids.append(video_id)
+        
+    while api.data['nextPageToken']:
+        newapi = API('videos_next', next_page=api.data['nextPageToken'])
+        next_page_res_json = newapi.data
         next_page_items = next_page_res_json['items']
         next_page_video_ids = [item['id']['videoId'] for item in next_page_items]
         video_ids.extend(next_page_video_ids)
@@ -95,14 +95,52 @@ def get_youtube_video_ids() -> list:
         if 'nextPageToken' not in next_page_res_json:
             break
         else:
-            next_page_token = next_page_res_json['nextPageToken']
-            sleep_with_delay(2)
+            api.data['nextPageToken'] = next_page_res_json['nextPageToken']
+            sleep_with_delay(1)
     return video_ids
+
+def check_thumbnails() -> None:
+    # get all videos from db
+    videos = read_videos()
+    # check if thumbnail is saved in file system
+    for video in videos:
+        video_id = video[0]
+        thumbnail_format = video[4].split('.')[-1]
+        thumbnail_path = os.path.join(BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
+        if not os.path.exists(thumbnail_path):
+            download_thumbnail(video[4], thumbnail_path)
+            resize_thumbnail(thumbnail_path)
+        else:
+            resize_thumbnail(thumbnail_path)
+
+def download_thumbnail(thumbnail_url: str, thumbnail_path: str) -> None:
+    """Download the thumbnail from the url and save it to the path"""
+    import requests
+    response = requests.get(thumbnail_url)
+    if response.status_code == 200:
+        with open(thumbnail_path, 'wb') as f:
+            f.write(response.content)
+        resize_thumbnail(thumbnail_path)
+            
+def resize_thumbnail(thumbnail_path: str) -> None:
+    """Resize the thumbnail to 200px width"""
+    from PIL import Image
+    image = Image.open(thumbnail_path)
+    dimensions = image.size
+    if dimensions[0] > 200:
+        ratio = 200 / dimensions[0]
+        new_height = int(dimensions[1] * ratio)
+        image = image.resize((200, new_height))
+        image.save(thumbnail_path)
 
 def get_youtube_video(video_id: str) -> dict:
     """Get video and its details from the YouTube API"""
-    video_url = build_video_url('video_detail', video_id)
-    res_json = api_call(video_url)
+    api = API('video_detail', video_id)
+    res_json = api.data
+    thumbnail = res_json['items'][0]['snippet']['thumbnails']['high']['url']
+    thumbnail_format = thumbnail.split('.')[-1]
+    thumbnail_path = os.path.join(BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
+    download_thumbnail(thumbnail, thumbnail_path)
     return {
         'id': video_id,
         'title': res_json['items'][0]['snippet']['title'],
@@ -119,9 +157,9 @@ def get_video_duration(video_id: str) -> dict:
     # Create a video duration dictionary
     video_duration = {}
     # Get the video url from the video id
-    video_url = build_video_url('details', video_id)
+    api = API('details', video_id)
     # read page info
-    pagedata = api_call(video_url)
+    pagedata = api.data
     # check if there are any results, if not, abort
     if len(pagedata['items']) == 0:
         return
@@ -132,16 +170,16 @@ def get_video_duration(video_id: str) -> dict:
 def get_episode_yt(video_id: str) -> dict:
     """Get the details of the episode from the Youtube API via video id"""
     # Get the video url from the video id
-    video_url = build_url('video', video_id)
+    api = API('video_detail', video_id)
     # read page info
-    res = api_call(video_url)
+    res = api.data
     # check if there are any results, if not, abort
     if len(res['items']) == 0:
         return {}
     # Check if video is an episode
     if not is_episode(
         res['items'][0]['snippet']['title'], 
-        parse_duration(res['items'][0]['contentDetails']['duration']['duration'])
+        parse_duration(res['items'][0]['contentDetails']['duration'])
     ):
         return {}
     # Create a video detail dictionary
@@ -152,11 +190,22 @@ def get_episode_yt(video_id: str) -> dict:
         'description' : res['items'][0]['snippet']['description'],
         'thumb' : res['items'][0]['snippet']['thumbnails']['high']['url'],
         'published_date' : res['items'][0]['snippet']['publishedAt'],
-        'duration' : parse_duration(res['items'][0]['contentDetails']['duration']['duration']),
+        'duration' : parse_duration(res['items'][0]['contentDetails']['duration']),
         'number' : get_episode_number(res['items'][0]['snippet']['title'])
     }
     # Return the video detail
     return episode
+
+def get_channel_details(channel_id: str) -> dict:
+    """Query the YouTube API for the channel details"""
+    api = API('channel')
+    res_json = api.data
+    return {
+        'id': channel_id,
+        'title': res_json['items'][0]['snippet']['title'],
+        'url': 'https://www.youtube.com/channel/' + channel_id,
+        'last_updated': datetime.now().timestamp()
+    }
 
 def check_video_id(video_id: str) -> bool:
     """
@@ -188,69 +237,20 @@ def check_video_id(video_id: str) -> bool:
         sleep(2)
         return False
 
-def get_video_ids(force_update:bool=False) -> list:
-    """
-    Get the video ids from the channel.
-    If channel was updated in the last 24 hours, read video ids from db.
-    If not, get video ids from youtube API and save in db.
-    """
-    # create channel object
-    c = Channel('UCYCGsNTvYxfkPkfQopRMP7w')
-    # check if channel was updated in the last 24 hours
-    if c.check_channel_update_db() == False or force_update == True:
-        # channel was not updated in the last 24 hours, get videos from youtube API
-        print('Getting videos from YouTube API')
-        video_ids = get_youtube_video_ids()
-        if video_ids == None:
-            print('No videos found')
-            return
-        for video_id in video_ids:
-            # check if video is already in db
-            check_video_id(video_id)
-        # update channel last updated
-        c.set_last_updated(datetime.now().timestamp())
-        c.update_channel_db()
-    else:
-        # channel was updated in the last 24 hours, get videos from db
-        print('Getting videos from database')
-        video_ids = read_video_ids()
-        if video_ids == None:
-            print('No videos found')
-            return
-        # check if video details are saved in db
-        for video_id in video_ids:
-            check_video_id(video_id)
-    return video_ids
-
-def get_channel_details(channel_id: str) -> dict:
-    """Query the YouTube API for the channel details"""
-    channel_url = build_url('channel')
-    res_json = api_call(channel_url)
-    return {
-        'id': channel_id,
-        'title': res_json['items'][0]['snippet']['title'],
-        'url': 'https://www.youtube.com/channel/' + channel_id,
-        'last_updated': datetime.now().timestamp()
-    }
-
-def get_episodes(video_ids: list) -> list:
-    """Get the details of the episodes from the video ids."""
-    episode_details = []
-    for video_id in video_ids:
-        # check if video is in db:
-        row = read_video(video_id)
-        if row is not None:
-            # read video detail from db
-            video_detail = {'id': row[0], 'title': row[1], 'url': row[2], 'description': row[3], 'thumb': row[4], 'published_date': row[5], 'duration': row[6], 'number': row[7]}
-        else:
-            # get video detail from youtube API
-            print('New video: ' + video_id)
-            video_detail = get_episode_yt(video_id)
-            if video_detail != {}:
-                insert_video(video_detail)
-        if video_detail != {}:
-            episode_details.append(video_detail)
-    return episode_details
+def handle_episode_detail(episode: dict) -> None:
+    """Handle the episode detail"""
+    # create episode object
+    ep = Episode(episode['id'], episode['title'], episode['url'], episode['description'], episode['thumb'], episode['published_date'], episode['duration'], episode['number'])
+    # check if episode is in db
+    row = read_video(episode['id'])
+    # if episode is in db, check if details are up to date
+    if row is not None:
+        if is_episode(row[1], row[6]):
+            # create episode object from db
+            dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
+            # if details are not up to date, update
+            if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
+                update_video(episode)
 
 def update_db(force: bool = False) -> None:
     """
@@ -267,33 +267,54 @@ def update_db(force: bool = False) -> None:
     if channel_details is None:
         channel_details = get_channel_details('UCYCGsNTvYxfkPkfQopRMP7w')
         insert_channel(channel_details)
+   
+    # create channel object
+    c = Channel('UCYCGsNTvYxfkPkfQopRMP7w')
     
-    # Get the video ids from the channel id
-    video_ids = get_video_ids(force_update=force)
-
-    # print the number of videos found
-    print(str(len(video_ids)) + ' videos found')
+    # check if channel was updated in the last 24 hours
+    if c.check_channel_update_db() == False or force == True:
+        # channel was not updated in the last 24 hours, get videos from youtube API
+        print('Getting videos from YouTube API')
+        video_ids = get_youtube_video_ids()
+        # update channel last updated
+        c.set_last_updated(datetime.now().timestamp())
+        c.update_channel_db()
+    else:
+        # channel was updated in the last 24 hours, get videos from db
+        print('Getting videos from database')
+        video_ids = read_video_ids()
     
     # Get the episode details from the video ids
-    episode_details = get_episodes(video_ids)
-
-    # print the number of episodes found
-    print(str(len(episode_details)) + ' episodes found')
-
-    for e in episode_details:
-        # create episode object
-        ep = Episode(e['id'], e['title'], e['url'], e['description'], e['thumb'], e['published_date'], e['duration'], e['number'])
-        # check if episode is in db
-        row = read_video(e['id'])
-        # if episode is not in db, insert
-        if row is None:
-            insert_video(e)
-        # if episode is in db, check if details are up to date
+    for video_id in video_ids:
+        # check if video is in db:
+        video = read_video(video_id)
+        
+        if video:
+            # check if video details have been saved yet
+            if video[1] == None:
+                # get video info
+                video = get_youtube_video(video_id)
+                update_video(video)
+                sleep(1)
+            elif video[7] == '0' and is_episode(video[1], video[6]):
+                # get episode number from title
+                number = get_episode_number(video[1])
+                # update episode number
+                update_video_number(video_id, number)
+            # read video detail from db
+            video_detail = {'id': video[0], 'title': video[1], 'url': video[2], 'description': video[3], 'thumb': video[4], 'published_date': video[5], 'duration': video[6], 'number': video[7]}
+            handle_episode_detail(video_detail)
+            
         else:
-            dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
-            # if details are not up to date, update
-            if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
-                update_video(e)
+            # get video info
+            video = get_youtube_video(video_id)
+            print('New video: ' + video['title'])
+            # get video detail from youtube API
+            video_detail = get_episode_yt(video_id)
+            if video_detail != {}:
+                insert_video(video_detail)
+                handle_episode_detail(video_detail)
+            sleep(1)
                 
 def main(*args):
     """Main function
@@ -310,6 +331,8 @@ def main(*args):
             update_db()
         elif args[0] == 'force':
             update_db(force=True)
+        elif args[0] == 'thumbnails':
+            check_thumbnails()
     elif len(args) == 2:
         if args[0] == 'update' and args[1] == 'force':
             update_db(force=True)

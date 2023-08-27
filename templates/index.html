@@ -23,7 +23,7 @@
             <tbody>
             {% for e in episodes %}
             <tr class="ep-row">
-                <td class="ep-thumb"><a id="episode-{{ e.number }}" class="ep-link" href="{{ e.url }}" target="_blank"><img class="ep-img" src="{{ e.thumb }}" title="{{ e.title }}" /></a></td>
+                <td class="ep-thumb"><a id="episode-{{ e.number }}" class="ep-link" href="{{ e.url }}" target="_blank"><img class="ep-img" src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" /></a></td>
                 <td><a class="ep-link" href="{{ e.id }}">#{{ e.number }}</a></td>
                 <td class="ep-title"><a class="ep-link" href="{{ e.id }}">{{ e.title }}</a></td>
                 <td class="ep-guest">{% for g in e.guest %}{% if loop.index > 1 %} &dash; {% endif %} <a href="/guest/{{ g }}">{{ g }}</a> {% endfor %}</td>

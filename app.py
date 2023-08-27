@@ -1,25 +1,17 @@
 from datetime import datetime
-from flask import Flask, render_template, url_for, request
+from flask import Flask, render_template, url_for, request, send_from_directory
 from classes.episode import Episode
 from utils.database import read_videos, read_video
 from setup import update_db, guest_list, load_about_content, load_license_content
 
-# static file constants
-CSS_FILE = 'style.css'
-ICON = 'TYSO_icon.png'
-LOGO = 'TYSO_logo_1400x1400.jpg'
-
 # Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='', static_folder='static', template_folder='templates')
 
 # Functions
 def override_render_template(template, **kwargs):
     "Override the render_template function to add the css_file parameter"
     return render_template(
         template, 
-        css_file=url_for('static', filename=CSS_FILE), 
-        icon=url_for('static', filename=ICON),
-        logo=url_for('static', filename=LOGO),
         **kwargs
     )
 
@@ -75,6 +67,11 @@ def guest(guest_name):
         guest=guest,
         order=reverse if order == 'ASC' else 'ASC'
     )
+    
+# @app.route('/static/thumbs/<thumb>')
+# def thumb(thumb):
+#     # load image from static/thumbs
+#     return send_from_directory('static/thumbs', thumb)
 
 @app.route('/about')
 def about():
