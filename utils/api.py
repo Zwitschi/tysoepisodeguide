@@ -1,6 +1,5 @@
 import os
 import requests
-from dotenv import load_dotenv
 
 class API:
     def __init__(self, task: str, video_id: str = None, next_page: str = None):
