@@ -98,7 +98,7 @@ def images():
 @app.route('/images/<image_name>')
 def image(image_name):
     # load all images from the images folder in base64 format
-    images = Images().images
+    images = os.listdir(os.path.join(os.path.dirname(__file__), 'static/thumbs'))
     for image in images:
         if image_name == image.image:
             return image.data

@@ -1,10 +1,10 @@
 // preloader.js
 (function() {
-    /* load JSON image list from URL: /static/images/ */
+    /* load JSON image list from URL: /images */
     var imageUrls = JSON.parse(
         $.ajax({
-            url: "/static/images/",
-            async: false,
+            url: "/images",
+            async: true,
             dataType: 'json'
         }).responseText
     );
@@ -14,7 +14,6 @@
       img.src = url;
       img.height = '150px';
       img.width = '200px';
-      
     }
   
     for (var i = 0; i < imageUrls.length; i++) {
