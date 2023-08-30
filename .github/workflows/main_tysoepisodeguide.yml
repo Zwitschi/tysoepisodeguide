@@ -36,9 +36,6 @@ jobs:
         
       - name: Setup db
         run: python setup.py install
-      
-      - name: Update db
-        run: python setup.py update
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v3
