@@ -1,12 +1,12 @@
 {% extends "_base.html" %}
 {% block title %}{{ guest.name }}{% endblock %}
-{% block head %}
-    {{ super() }}
-    <meta name="description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman">
-    <meta property="og:title" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
-    <meta property="og:description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
-    <meta name="twitter:description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
-    <meta name="twitter:title" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+{% block head %}{{ super() }}
+<meta name="description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman">
+<meta property="og:title" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+<meta property="og:description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+<meta name="twitter:description" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+<meta name="twitter:title" content="{{ guest.name }} on Take Your Shoes Off with Rick Glassman" />
+<script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
 {% endblock %}
 {% block content %}
 <div class="row justify-content-center">

@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-{% include '_head.html' %}
+<head>
+<title>{% block title %}{% endblock %} - Take Your Shoes Off with Rick Glassman</title>
+{% include '_head.html' %}{% block head %}{% endblock %}
+</head>
 <body>
 <div id="header">
 {% include '_nav.html' %}

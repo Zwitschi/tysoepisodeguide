@@ -111,7 +111,7 @@ tr.ep-row, tr.guest-row {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 1.25rem;
 }
-.ep-thumb, .ep-row img {
+tbody .ep-thumb, tbody .ep-row img {
     width: 200px;
 }
 .ep-row .ep-guest a {
