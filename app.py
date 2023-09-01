@@ -6,9 +6,12 @@ from classes.episode import Episode
 from utils.database import read_videos, read_video
 from utils.images import Images
 from setup import update_db, guest_list, load_about_content, load_license_content
+## add gzip compression
+from flask_compress import Compress
 
 # Flask app
 app = Flask(__name__, static_url_path='', static_folder='static', template_folder='templates')
+Compress(app)
 
 # Routes
 @app.route('/')
