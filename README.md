@@ -6,7 +6,11 @@ This is an episode guide for the Take Your Shoes Off podcast with Rick Glassman.
 
 The episode guide is generated from [Rick Glassman's YouTube Channel](https://www.youtube.com/@rickglassman) using the [YouTube Data API](https://developers.google.com/youtube).
 
-This python program is used to generate the episode guide from the YouTube channel by querying the YouTube Data API. All video information is internally stored in a sqlite database. The database is located in the `db` directory. The database is created and updated by the python program. The database is not included in the repository and you will need to supply your own API key to generate the database.
+This python program is used to generate the episode guide from the YouTube channel by querying the YouTube Data API. 
+
+All video information is internally stored in a sqlite database. The database is located in the `db` directory. The database is created and updated by the python program by running `python setup.py install`. The program will create the database if it does not exist, and update the database if it does exist. 
+
+The episode guide markdown file is used to generate the episode guide HTML file, which is located in the `templates` directory. The episode guide HTML file is used by the Flask app to display the episode guide.
 
 ## Requirements
 
@@ -21,6 +25,7 @@ This python program is used to generate the episode guide from the YouTube chann
 
 * [Python 3.11+](https://www.python.org/downloads/)
 * [YouTube Data API key](https://developers.google.com/youtube/v3/getting-started)
+
 ## Usage
 
 1. Clone the repository
