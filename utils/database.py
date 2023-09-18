@@ -138,6 +138,13 @@ def create_tables() -> None:
     ''')
     conn.commit()
     conn.close()
+    
+def check_install() -> bool:
+    """Check if database is installed"""
+    if os.path.exists(DB_FILE):
+        return True
+    else:
+        return False
 
 def install() -> None:
     """Install the database and create the tables if needed."""

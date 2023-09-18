@@ -6,7 +6,7 @@ from datetime import datetime
 from classes.episode import Episode
 from classes.channel import Channel
 from utils.api import API
-from utils.database import insert_channel, insert_video, install
+from utils.database import insert_channel, insert_video, install, check_install
 from utils.database import read_channel, read_video, update_video, update_video_number, read_videos, read_video_ids
 from utils.parsing import parse_duration, is_episode, get_episode_number
 from utils.timing import sleep_with_delay
@@ -211,6 +211,9 @@ def update_db(force: bool = False) -> None:
     Get the episode details from the video ids.
     Update the database with the episode details if needed.
     """
+    if not check_install():
+        install()
+        
     # Check if channel details are up to date
     channel_details = read_channel()
 
