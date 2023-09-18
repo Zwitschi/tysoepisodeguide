@@ -211,9 +211,6 @@ def update_db(force: bool = False) -> None:
     Get the episode details from the video ids.
     Update the database with the episode details if needed.
     """
-    if not check_install():
-        install()
-        
     # Check if channel details are up to date
     channel_details = read_channel()
 
@@ -311,6 +308,9 @@ def main(*args):
         # update database
         update_db(force)
     elif action == 'update':
+        # check if database is installed
+        if not check_install():
+            install()
         # update database
         update_db(force)
     elif action == 'thumbnails':
