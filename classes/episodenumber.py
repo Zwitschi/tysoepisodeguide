@@ -17,6 +17,12 @@ class EpisodeNumber:
             int: the episode number
         """
         # exceptions
+        exceptions = [
+            'best of',
+            'patreon unlocked',
+            'replenish',
+            'shorts'
+        ]
         if '#' not in self.title and 'Balcony Series' in self.title:
             # try to get the episode number from the title with regex, only consider numbers and . 
             self.number = re.findall(r'[\d\.]+', self.title)
@@ -24,8 +30,8 @@ class EpisodeNumber:
                 self.number = self.number[0]
         elif '#' not in self.title and '50th' in self.title:
             self.number = 50
-        elif 'BEST OF' in self.title or 'PATREON UNLOCKED' in self.title:
-            return 0
+        elif any(x in self.title.lower() for x in exceptions):
+            self.number = 0
         elif '#' not in self.title:
             self.number = 0
         else:
