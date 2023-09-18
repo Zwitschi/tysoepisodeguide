@@ -5,7 +5,6 @@ from time import sleep
 from datetime import datetime
 from classes.episode import Episode
 from classes.channel import Channel
-from classes.guest import Guest
 from utils.api import API
 from utils.database import insert_channel, insert_video, install
 from utils.database import read_channel, read_video, update_video, update_video_number, read_videos, read_video_ids
@@ -29,52 +28,6 @@ def load_license_content() -> str:
         license = f.read()
         return markdown.markdown(license)
 
-def guest_list(order: str = 'ASC') -> list:
-    """Create the list of guests for the guests page"""
-    # create a list of episodes
-    episodes = []
-
-    # get all videos from db
-    videos = read_videos()
-    
-    # add episodes to list
-    for e in videos:
-        episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]))
-    
-    # create a list of unique guest names
-    guest_names = []
-
-    # find all guests in all episodes
-    for e in episodes:
-        # get the episode guest(s)
-        ep_guest = e.guest
-        # if more than one guest, split guests into list
-        if len(ep_guest) > 1:
-            for gn in ep_guest:
-                gn = gn.strip()
-                if gn not in guest_names:
-                    guest_names.append(gn)
-        else:
-            gn = ep_guest[0].strip()
-            if gn not in guest_names:
-                guest_names.append(gn)
-
-    # sort guests by name
-    guest_names.sort(key=lambda x: x)
-
-    # create a list of guests
-    guests = []
-
-    # add episodes to guests
-    for gn in guest_names:
-        g = Guest(gn)
-        g.episodes = [e for e in episodes if gn in e.guest]
-        # if sort order is 'DESC', reverse episode list
-        if order == 'DESC':
-            g.episodes.reverse()
-        guests.append(g)
-    return guests
-
 def get_youtube_video_ids() -> list:
     """Get the video ids from the channel via API call"""
     api = API('videos')
@@ -96,7 +49,6 @@ def get_youtube_video_ids() -> list:
             break
         else:
             api.data['nextPageToken'] = next_page_res_json['nextPageToken']
-            sleep_with_delay(1)
     return video_ids
 
 def check_thumbnails() -> None:
@@ -141,6 +93,7 @@ def get_youtube_video(video_id: str) -> dict:
     thumbnail_format = thumbnail.split('.')[-1]
     thumbnail_path = os.path.join(BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
     download_thumbnail(thumbnail, thumbnail_path)
+    sleep_with_delay(1)
     return {
         'id': video_id,
         'title': res_json['items'][0]['snippet']['title'],
@@ -222,7 +175,6 @@ def check_video_id(video_id: str) -> bool:
             # get video info
             video = get_youtube_video(video_id)
             update_video(video)
-            sleep(2)
         elif video[7] == '0' and is_episode(video[1], video[6]):
             # get episode number from title
             number = get_episode_number(video[1])
@@ -234,20 +186,19 @@ def check_video_id(video_id: str) -> bool:
         video = get_youtube_video(video_id)
         insert_video(video)
         print('New video: ' + video['title'])
-        sleep(2)
         return False
 
 def handle_episode_detail(episode: dict) -> None:
     """Handle the episode detail"""
     # create episode object
-    ep = Episode(episode['id'], episode['title'], episode['url'], episode['description'], episode['thumb'], episode['published_date'], episode['duration'], episode['number'])
+    ep = Episode(episode['id'], episode['title'], episode['url'], episode['description'], episode['thumb'], episode['published_date'], episode['duration'])
     # check if episode is in db
     row = read_video(episode['id'])
     # if episode is in db, check if details are up to date
     if row is not None:
         if is_episode(row[1], row[6]):
             # create episode object from db
-            dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7])
+            dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
             # if details are not up to date, update
             if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
                 update_video(episode)
@@ -295,7 +246,6 @@ def update_db(force: bool = False) -> None:
                 # get video info
                 video = get_youtube_video(video_id)
                 update_video(video)
-                sleep(1)
             elif video[7] == '0' and is_episode(video[1], video[6]):
                 # get episode number from title
                 number = get_episode_number(video[1])
@@ -314,31 +264,60 @@ def update_db(force: bool = False) -> None:
             if video_detail != {}:
                 insert_video(video_detail)
                 handle_episode_detail(video_detail)
-            sleep(1)
                 
-def main(*args):
-    """Main function
+def action_from_arguments(*args) -> None:
+    """
+    Check the command line arguments and execute the appropriate function
     
-    Accepts arguments: 'install' or 'update'
+    Accepts arguments: install, update, force, thumbnails
     Default is 'update'
     """
+    action = 'update'
+    force = False
     if len(args) == 0:
-        update_db()
+        action = 'update'
     elif len(args) == 1:
         if args[0] == 'install':
-            install()
+            action = 'install'
         elif args[0] == 'update':
-            update_db()
+            action = 'update'
         elif args[0] == 'force':
-            update_db(force=True)
+            action = 'update'
+            force = True
         elif args[0] == 'thumbnails':
-            check_thumbnails()
+            action = 'thumbnails'
     elif len(args) == 2:
         if args[0] == 'update' and args[1] == 'force':
-            update_db(force=True)
+            action = 'update'
+            force = True
     else:
-        print('Usage: python setup.py [install|update [force]|force]')
+        print('Usage: python setup.py [install|update [force]|force|thumbnails]')
         sys.exit(1)
+    return action, force
+                
+def main(*args):
+    """
+    Main function
+    """
+    # check command line arguments
+    action, force = action_from_arguments(*args)
+    # execute action
+    if action == 'install':
+        # install database
+        install()
+        # update database
+        update_db(force)
+    elif action == 'update':
+        # update database
+        update_db(force)
+    elif action == 'thumbnails':
+        # check thumbnails
+        check_thumbnails()
+    else:
+        print('Usage: python setup.py [install|update [force]|force|thumbnails]')
+        sys.exit(1)
+    # exit
+    sys.exit(0)
 
 if __name__ == '__main__':
     main(*sys.argv[1:])

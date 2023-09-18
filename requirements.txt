@@ -1,6 +1,6 @@
-Pillow==10.0.0
 Flask==2.3.2
-requests==2.31.0
-markdown==3.3.4
-gunicorn==20.1.0
 flask_compress==1.13
+gunicorn==20.1.0
+markdown==3.3.4
+Pillow==10.0.0
+requests==2.31.0
