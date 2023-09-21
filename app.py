@@ -47,9 +47,14 @@ def episode(episode_id):
 
 @app.route('/guests')
 def guests():
+    order = 'ASC'
+    reverse = 'DESC'
+    # get sort order from request args (if present)
+    if 'sort' in request.args:
+        order = request.args.get('sort', order, type = str)
     return render_template(
         'guests.html', 
-        guests=Guestlist().guests
+        guests=Guestlist(order).guests
     )
 
 @app.route('/guest/<guest_name>')
