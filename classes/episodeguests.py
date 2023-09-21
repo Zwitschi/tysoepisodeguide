@@ -39,6 +39,8 @@ class EpisodeGuests:
             self.title = self.title.split(' - The Sleepover Series:')[0]
         if '(' in self.title:
             self.title = self.title.split('(')[0]
+        if ' aka' in self.title:
+            self.title = self.title.split(' aka')[0]
         # remove trailing spaces
         while self.title.endswith(' '):
             self.title = self.title[:-1]
