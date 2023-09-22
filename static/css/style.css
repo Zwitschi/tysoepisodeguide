@@ -1,20 +1,19 @@
 /* 
  * CSS for Take Your Shoes Off podcast episode guide 
- * 
- * Date: 2023-06-23
- * Author: Georg Sinn <zwitschi82 AT gmail DOT com>
- * License: MIT
 */
 
+/* Global Styles */
 body {
     background-color: #000;
     color: #fff;
+    margin: 0;
 }
+
 .row {
     margin: 0;
 }
 
-/* font amboy from amboy.woff */
+/* Font */
 @font-face {
     font-family: 'amboy-black';
     src: url('amboy-black.woff') format('woff');
@@ -22,13 +21,11 @@ body {
     font-style: normal;
 }
 
-/* format headers in yellow */
-h1, h2, h3, h4, h5, h6 {
-    color: #ff0;
-}
-
-/* format all links in yellow */
-a {
+/* Headers and Links */
+h1, h2, h3, h4, h5, h6,
+a, #header a.nav-link,
+table#episode-guide th, 
+table#guests th {
     color: #ff0;
 }
 
@@ -36,24 +33,25 @@ a:hover {
     color: #fff;
 }
 
-/* all elements with amboy-black font */
-a, h1, h2, h3, h4, h5, h6, 
-#header a.nav-link, 
+/* Font Family */
+a, h1, h2, h3, h4, h5, h6, #header a.nav-link,
 #footer,
 table#episode-guide th, 
-table#guests th
-{
+table#guests th {
     font-family: 'amboy-black', sans-serif;
 }
 
+/* Layout */
 #header, #content, #footer {
     margin: 0 .5em;
 }
+
 #header {
     color: #fff;
     padding: 0;
     margin-bottom: 1em;
 }
+
 #content {
     padding: auto;
 }
@@ -64,15 +62,12 @@ table#guests th
     height: 1.5rem;
 }
 
-/** header **/
-#header-title {
+/* Header Styles */
+#header-title, #header-nav {
     margin: 0;
     padding: 0;
 }
-#header-nav {
-    margin: 0;
-    padding: 0;
-}
+
 #header h1 {
     display: inline-block;
     word-wrap: break-word;
@@ -86,6 +81,12 @@ table#guests th
     color: #0060df;
 }
 
+#header-img, #header-img img, #header-nav h1 {
+    vertical-align: bottom;
+    height: 50px;
+    line-height: 50px;
+}
+
 #header-img {
     display: inline-block;
     margin-right: 1em;
@@ -93,12 +94,6 @@ table#guests th
 
 #header-img img {
     height: 50px;
-}
-
-#header-img, #header-img img, #header-nav h1 {
-    vertical-align: bottom;
-    height: 50px;
-    line-height: 50px;
 }
 
 #header a.nav-link {
@@ -110,20 +105,24 @@ table#guests th
     font-size: 1.8rem;
 }
 
-/** formatting for index.html **/
+/* Table Styles */
 table#episode-guide, table#guests {
     margin-top: .5em;
 }
+
 table#episode-guide th, table#guests th {
     font-size: 1.2rem;
 }
+
 tr.ep-row, tr.guest-row {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 1.25rem;
 }
+
 tbody .ep-thumb, tbody .ep-row img {
     width: 200px;
 }
+
 .ep-row .ep-guest a {
     font-family: Arial, Helvetica, sans-serif;
 }
@@ -131,14 +130,17 @@ tbody .ep-thumb, tbody .ep-row img {
 td.ep-title {
     font-weight: bold;
 }
+
 td.ep-guest {
     font-weight: normal;
     flex-wrap: wrap;
 }
+
 td.ep-date {
     text-align: right;
     font-weight: normal;
 }
+
 .ep-link {
     font-family: Arial, Helvetica, sans-serif;
     vertical-align: top;
@@ -151,7 +153,7 @@ td.ep-date {
     height: 144px;
 }
 
-/** formatting for episode.html **/
+/* Episode Styles */
 .episode .ep-details {
     margin-top: 0;
     font-family: 'amboy-black', sans-serif;
@@ -173,10 +175,7 @@ h2.ep-title {
     text-decoration: underline;
 }
 
-.episode .ep-title:hover {
-    color: #fff;
-}
-
+.episode .ep-title:hover,
 .episode a.ep-link:hover {
     color: #fff;
 }
@@ -193,7 +192,7 @@ h2.ep-title {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/** formatting for guests.html **/
+/* Guests Styles */
 .guest-list .guest-name {
     font-size: 1.2rem;
     font-weight: bold;
@@ -210,10 +209,11 @@ h2.ep-title {
     font-size: 1.2rem;
 }
 
-/** formatting for guest.html **/
+/* Guest Styles */
 #guest-episodes table {
     font-size: 1.2rem;
 }
+
 #guest-episodes table th {
     font-family: 'amboy-black', sans-serif;
 }
@@ -221,55 +221,43 @@ h2.ep-title {
 #about-page p {
     font-size: 1.0rem;
 }
+
 #about-page a {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-/** Overrides for table columns **/
-.table-striped > tbody > tr:nth-of-type(2n+1) > .ep-thumb {
-    --bs-table-accent-bg: #000;
-    color: #000;
-}
-.table-dark {
-	--bs-table-border-color: #000;
-}
-.table-hover > tbody > tr:hover > .ep-thumb {
-	--bs-table-accent-bg: #000;
-	color: #000;
-}
-.ep-thumb {
-    background-color: #000;
-}
-.table > :not(caption) > * > .ep-thumb {
-	background-color: #000;
-}
-
-
+/* Media Queries */
 @media screen and (max-width: 400px) {
     #header, #content, #footer {
         margin: 0;
     }
+
     #header-img {
         display: none;
     }
+
     #header .col-9, #header h1 {
         width: 100%;
         margin: 0;
         padding: 0;
     }
+
     th.ep-head-date, th.ep-head-duration,
     td.ep-date, td.ep-duration {
         display: none;
     }
+
     #header-nav {
         width: 100%;
         display: block;
         padding: 0;
     }
+
     #header-nav.col-3 ul.nav.justify-content-start li.nav-item a.nav-link {
         margin-right: 1em;
         padding: 0;
     }
+
     .ep-row img {
         max-height: 2.5em;
     }
@@ -295,5 +283,4 @@ h2.ep-title {
         top: 0;
         z-index: -9;
     }
-    
 }
