@@ -23,7 +23,7 @@ def sort_order(request):
     # only allow ASC or DESC
     if order not in ['ASC', 'DESC']:
         order = 'ASC'
-    order = reverse if order == 'ASC' else 'ASC'
+    order = reverse if order == 'DESC' else 'ASC'
     return order    
 
 # Routes
@@ -33,7 +33,8 @@ def index():
     # create empty list for episodes
     episodes = []
     # get episodes from database
-    for e in Videos.read_videos(order=order):
+    v = Videos()
+    for e in v.read_videos(order=order):
         # create Episode object from database record and append to episodes list
         episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6]))
     # render the template
@@ -85,11 +86,13 @@ def license():
 
 @app.route('/update')
 def update():
-    update_db()
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    ret_str = update_db()
+    about = '<h1>Update complete</h1>'
+    for line in ret_str.split('\n'):
+        about += '<pre>' + line + '</pre>\n'
     return render_template(
         'about.html',
-        about='<h1>Update complete</h1><p>Database updated at {}</p>'.format(timestamp)
+        about=about
     )
 
 # routes for images

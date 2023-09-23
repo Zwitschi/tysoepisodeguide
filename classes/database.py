@@ -36,6 +36,7 @@ class Database:
 class Channels(Database):
     def __init__(self) -> None:
         super().__init__()
+        self.connection = sqlite3.connect(self.DB_FILE)
         
     def create(self) -> None:
         """
@@ -88,7 +89,7 @@ class Channels(Database):
 class Videos(Database):
     def __init__(self) -> None:
         super().__init__()
-        self.create()
+        self.connection = sqlite3.connect(self.DB_FILE)
         
     def create(self) -> None:
         """Create videos table in database"""

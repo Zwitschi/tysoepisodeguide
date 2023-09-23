@@ -13,7 +13,8 @@ class Guestlist:
         episodes = []
 
         # get all videos from db
-        videos = Videos.read_videos()
+        v = Videos()
+        videos = v.read_videos()
         
         # add episodes to list
         for e in videos:

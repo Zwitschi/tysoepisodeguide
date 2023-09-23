@@ -169,12 +169,14 @@ def check_video_id(video_id: str) -> bool:
         print('New video: ' + video['title'])
         return False
 
-def handle_episode_detail(episode: dict) -> None:
+def handle_episode_detail(episode: dict) -> str:
     """Handle the episode detail"""
+    ret_str = ''
     # create episode object
     ep = Episode(episode['id'], episode['title'], episode['url'], episode['description'], episode['thumb'], episode['published_date'], episode['duration'])
     # check if episode is in db
-    row = Videos.read(episode['id'])
+    v = Videos()
+    row = v.read(episode['id'])
     # if episode is in db, check if details are up to date
     if row is not None:
         if is_episode(row[1], row[6]):
@@ -183,8 +185,10 @@ def handle_episode_detail(episode: dict) -> None:
             # if details are not up to date, update
             if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
                 Videos.update(episode)
-
-def update_db(force: bool = False) -> None:
+                ret_str += 'Video details updated: ' + episode['title'] + '\n'
+    return ret_str
+    
+def update_db(force: bool = False) -> str:
     """
     Initialise the database and create the tables if needed.
     Check the channel details for updates.
@@ -192,13 +196,16 @@ def update_db(force: bool = False) -> None:
     Get the episode details from the video ids.
     Update the database with the episode details if needed.
     """
+    ret_str = '[' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '] Update started\n'
     # Check if channel details are up to date
-    channel_details = Channels.read()
+    c = Channels()
+    channel_details = c.read()
 
     # If there is no record yet, query youtube API and save details
     if channel_details is None:
         channel_details = get_channel_details('UCYCGsNTvYxfkPkfQopRMP7w')
         Channels.insert(channel_details)
+        ret_str += 'Channel details saved to database\n'
    
     # create channel object
     c = Channel('UCYCGsNTvYxfkPkfQopRMP7w')
@@ -211,15 +218,17 @@ def update_db(force: bool = False) -> None:
         # update channel last updated
         c.set_last_updated(datetime.now().timestamp())
         c.update_channel_db()
+        ret_str += 'Videos saved to database\n'
     else:
         # channel was updated in the last 24 hours, get videos from db
-        print('Getting videos from database')
-        video_ids = Videos.read_ids()
+        v = Videos()
+        video_ids = v.read_ids()
     
     # Get the episode details from the video ids
     for video_id in video_ids:
         # check if video is in db:
-        video = Videos.read(video_id)
+        v = Videos()
+        video = v.read(video_id)
         
         if video:
             # check if video details have been saved yet
@@ -227,24 +236,28 @@ def update_db(force: bool = False) -> None:
                 # get video info
                 video = get_youtube_video(video_id)
                 Videos.update(video)
+                ret_str += 'Video details updated in database\n'
             elif video[7] == '0' and is_episode(video[1], video[6]):
                 # get episode number from title
                 number = get_episode_number(video[1])
                 # update episode number
-                Videos.update_number(video_id, number)
+                v = Videos()
+                v.update_number(video_id, number)
             # read video detail from db
             video_detail = {'id': video[0], 'title': video[1], 'url': video[2], 'description': video[3], 'thumb': video[4], 'published_date': video[5], 'duration': video[6], 'number': video[7]}
-            handle_episode_detail(video_detail)
+            ret_str += handle_episode_detail(video_detail)
             
         else:
             # get video info
             video = get_youtube_video(video_id)
-            print('New video: ' + video['title'])
+            ret_str += 'New video: ' + video['title'] + '\n'
             # get video detail from youtube API
             video_detail = get_episode_yt(video_id)
             if video_detail != {}:
                 Videos.insert(video_detail)
-                handle_episode_detail(video_detail)
+                ret_str += handle_episode_detail(video_detail)
+    ret_str += '[' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '] Update finished\n'
+    return ret_str
                 
 def action_from_arguments(*args) -> None:
     """
