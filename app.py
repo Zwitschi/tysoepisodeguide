@@ -23,7 +23,7 @@ def sort_order(request):
     # only allow ASC or DESC
     if order not in ['ASC', 'DESC']:
         order = 'ASC'
-    order = reverse if order == 'DESC' else 'ASC'
+    order = reverse if order == 'ASC' else 'ASC'
     return order    
 
 # Routes
