@@ -1,4 +1,4 @@
-from utils.database import read_videos
+from classes.database import Videos
 from classes.episode import Episode
 from classes.guest import Guest
 
@@ -13,7 +13,7 @@ class Guestlist:
         episodes = []
 
         # get all videos from db
-        videos = read_videos()
+        videos = Videos.read_videos()
         
         # add episodes to list
         for e in videos:

@@ -1,13 +1,12 @@
 import os
 import sys
 import markdown
-from time import sleep
 from datetime import datetime
 from classes.episode import Episode
 from classes.channel import Channel
+from classes.database import Database, Channels, Videos
+from classes.thumbnail import Thumbnail
 from utils.api import API
-from utils.database import insert_channel, insert_video, install, check_install
-from utils.database import read_channel, read_video, update_video, update_video_number, read_videos, read_video_ids
 from utils.parsing import parse_duration, is_episode, get_episode_number
 from utils.timing import sleep_with_delay
 
@@ -37,7 +36,7 @@ def get_youtube_video_ids() -> list:
         video_id = item['id']['videoId']
         if video_id not in video_ids:
             video_ids.append(video_id)
-        
+
     while api.data['nextPageToken']:
         newapi = API('videos_next', next_page=api.data['nextPageToken'])
         next_page_res_json = newapi.data
@@ -53,37 +52,19 @@ def get_youtube_video_ids() -> list:
 
 def check_thumbnails() -> None:
     # get all videos from db
-    videos = read_videos()
+    videos = Videos.read()
     # check if thumbnail is saved in file system
     for video in videos:
         video_id = video[0]
         thumbnail_format = video[4].split('.')[-1]
         thumbnail_path = os.path.join(BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
         if not os.path.exists(thumbnail_path):
-            download_thumbnail(video[4], thumbnail_path)
-            resize_thumbnail(thumbnail_path)
+            t = Thumbnail(video[4], thumbnail_path)
+            t.download()
+            t.resize()
         else:
-            resize_thumbnail(thumbnail_path)
-
-def download_thumbnail(thumbnail_url: str, thumbnail_path: str) -> None:
-    """Download the thumbnail from the url and save it to the path"""
-    import requests
-    response = requests.get(thumbnail_url)
-    if response.status_code == 200:
-        with open(thumbnail_path, 'wb') as f:
-            f.write(response.content)
-        resize_thumbnail(thumbnail_path)
-            
-def resize_thumbnail(thumbnail_path: str) -> None:
-    """Resize the thumbnail to 200px width"""
-    from PIL import Image
-    image = Image.open(thumbnail_path)
-    dimensions = image.size
-    if dimensions[0] > 200:
-        ratio = 200 / dimensions[0]
-        new_height = int(dimensions[1] * ratio)
-        image = image.resize((200, new_height))
-        image.save(thumbnail_path)
+            t = Thumbnail(video[4], thumbnail_path)
+            t.resize()
 
 def get_youtube_video(video_id: str) -> dict:
     """Get video and its details from the YouTube API"""
@@ -92,7 +73,7 @@ def get_youtube_video(video_id: str) -> dict:
     thumbnail = res_json['items'][0]['snippet']['thumbnails']['high']['url']
     thumbnail_format = thumbnail.split('.')[-1]
     thumbnail_path = os.path.join(BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
-    download_thumbnail(thumbnail, thumbnail_path)
+    Thumbnail(thumbnail, thumbnail_path).download()
     sleep_with_delay(1)
     return {
         'id': video_id,
@@ -168,23 +149,23 @@ def check_video_id(video_id: str) -> bool:
     If video id is in database, check if video details are saved in database.
     If only video id is present, get the video details from youtube API and update database.
     """
-    video = read_video(video_id)
+    video = Videos.read(video_id)
     if video:
         # check if video details have been saved yet
         if video[1] == None:
             # get video info
             video = get_youtube_video(video_id)
-            update_video(video)
+            Videos.update(video)
         elif video[7] == '0' and is_episode(video[1], video[6]):
             # get episode number from title
             number = get_episode_number(video[1])
             # update episode number
-            update_video_number(video_id, number)
+            Videos.update_number(video_id, number)
         return True
     else:
         # get video info
         video = get_youtube_video(video_id)
-        insert_video(video)
+        Videos.insert(video)
         print('New video: ' + video['title'])
         return False
 
@@ -193,7 +174,7 @@ def handle_episode_detail(episode: dict) -> None:
     # create episode object
     ep = Episode(episode['id'], episode['title'], episode['url'], episode['description'], episode['thumb'], episode['published_date'], episode['duration'])
     # check if episode is in db
-    row = read_video(episode['id'])
+    row = Videos.read(episode['id'])
     # if episode is in db, check if details are up to date
     if row is not None:
         if is_episode(row[1], row[6]):
@@ -201,7 +182,7 @@ def handle_episode_detail(episode: dict) -> None:
             dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
             # if details are not up to date, update
             if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
-                update_video(episode)
+                Videos.update(episode)
 
 def update_db(force: bool = False) -> None:
     """
@@ -212,12 +193,12 @@ def update_db(force: bool = False) -> None:
     Update the database with the episode details if needed.
     """
     # Check if channel details are up to date
-    channel_details = read_channel()
+    channel_details = Channels.read()
 
     # If there is no record yet, query youtube API and save details
     if channel_details is None:
         channel_details = get_channel_details('UCYCGsNTvYxfkPkfQopRMP7w')
-        insert_channel(channel_details)
+        Channels.insert(channel_details)
    
     # create channel object
     c = Channel('UCYCGsNTvYxfkPkfQopRMP7w')
@@ -233,24 +214,24 @@ def update_db(force: bool = False) -> None:
     else:
         # channel was updated in the last 24 hours, get videos from db
         print('Getting videos from database')
-        video_ids = read_video_ids()
+        video_ids = Videos.read_ids()
     
     # Get the episode details from the video ids
     for video_id in video_ids:
         # check if video is in db:
-        video = read_video(video_id)
+        video = Videos.read(video_id)
         
         if video:
             # check if video details have been saved yet
             if video[1] == None:
                 # get video info
                 video = get_youtube_video(video_id)
-                update_video(video)
+                Videos.update(video)
             elif video[7] == '0' and is_episode(video[1], video[6]):
                 # get episode number from title
                 number = get_episode_number(video[1])
                 # update episode number
-                update_video_number(video_id, number)
+                Videos.update_number(video_id, number)
             # read video detail from db
             video_detail = {'id': video[0], 'title': video[1], 'url': video[2], 'description': video[3], 'thumb': video[4], 'published_date': video[5], 'duration': video[6], 'number': video[7]}
             handle_episode_detail(video_detail)
@@ -262,7 +243,7 @@ def update_db(force: bool = False) -> None:
             # get video detail from youtube API
             video_detail = get_episode_yt(video_id)
             if video_detail != {}:
-                insert_video(video_detail)
+                Videos.insert(video_detail)
                 handle_episode_detail(video_detail)
                 
 def action_from_arguments(*args) -> None:
@@ -304,13 +285,13 @@ def main(*args):
     # execute action
     if action == 'install':
         # install database
-        install()
+        Database.install()
         # update database
         update_db(force)
     elif action == 'update':
         # check if database is installed
-        if not check_install():
-            install()
+        if not Database.check_install():
+            Database.install()
         # update database
         update_db(force)
     elif action == 'thumbnails':
