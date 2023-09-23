@@ -70,7 +70,7 @@ class EpisodeGuests:
             self.title = self.title.replace(r, '')
 
         for n in range(1, 50):
-            self.title = self.title.replace(f'{n}.0', str(n))
+            self.title = self.title.replace(f'{n}.0', '')
 
         # Remove extra spaces
         self.title = ' '.join(self.title.split())
