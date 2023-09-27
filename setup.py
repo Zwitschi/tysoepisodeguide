@@ -149,23 +149,24 @@ def check_video_id(video_id: str) -> bool:
     If video id is in database, check if video details are saved in database.
     If only video id is present, get the video details from youtube API and update database.
     """
-    video = Videos.read(video_id)
+    v = Videos()
+    video = v.read(video_id)
     if video:
         # check if video details have been saved yet
         if video[1] == None:
             # get video info
             video = get_youtube_video(video_id)
-            Videos.update(video)
+            v.update(video)
         elif video[7] == '0' and is_episode(video[1], video[6]):
             # get episode number from title
             number = get_episode_number(video[1])
             # update episode number
-            Videos.update_number(video_id, number)
+            v.update_number(video_id, number)
         return True
     else:
         # get video info
         video = get_youtube_video(video_id)
-        Videos.insert(video)
+        v.insert(video)
         print('New video: ' + video['title'])
         return False
 
@@ -184,7 +185,7 @@ def handle_episode_detail(episode: dict) -> str:
             dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
             # if details are not up to date, update
             if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
-                Videos.update(episode)
+                v.update(episode)
                 ret_str += 'Video details updated: ' + episode['title'] + '\n'
     return ret_str
     
@@ -235,13 +236,12 @@ def update_db(force: bool = False) -> str:
             if video[1] == None:
                 # get video info
                 video = get_youtube_video(video_id)
-                Videos.update(video)
+                v.update(video)
                 ret_str += 'Video details updated in database\n'
             elif video[7] == '0' and is_episode(video[1], video[6]):
                 # get episode number from title
                 number = get_episode_number(video[1])
                 # update episode number
-                v = Videos()
                 v.update_number(video_id, number)
             # read video detail from db
             video_detail = {'id': video[0], 'title': video[1], 'url': video[2], 'description': video[3], 'thumb': video[4], 'published_date': video[5], 'duration': video[6], 'number': video[7]}
@@ -254,7 +254,7 @@ def update_db(force: bool = False) -> str:
             # get video detail from youtube API
             video_detail = get_episode_yt(video_id)
             if video_detail != {}:
-                Videos.insert(video_detail)
+                v.insert(video_detail)
                 ret_str += handle_episode_detail(video_detail)
     ret_str += '[' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '] Update finished\n'
     return ret_str

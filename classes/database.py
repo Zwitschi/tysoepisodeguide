@@ -89,11 +89,11 @@ class Channels(Database):
 class Videos(Database):
     def __init__(self) -> None:
         super().__init__()
-        self.connection = sqlite3.connect(self.DB_FILE)
         
     def create(self) -> None:
         """Create videos table in database"""
-        c = self.connection.cursor()
+        connection = sqlite3.connect(self.DB_FILE)
+        c = connection.cursor()
         c.execute('''
         CREATE TABLE IF NOT EXISTS videos (
             id TEXT PRIMARY KEY, 
@@ -106,45 +106,50 @@ class Videos(Database):
             number TEXT 
         )
         ''')
-        self.connection.commit()
-        self.connection.close()
+        connection.commit()
+        connection.close()
     
     def insert(self, video: dict) -> None:
         """Insert video into database"""
-        c = self.connection.cursor()
+        connection = sqlite3.connect(self.DB_FILE)
+        c = connection.cursor()
         c.execute('INSERT INTO videos (id, title, url, description, thumb, published_date, duration, number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (video['id'], video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number']))
-        self.connection.commit()
-        self.connection.close()
+        connection.commit()
+        connection.close()
     
     def update(self, video: dict) -> None:
         """Update video in database"""
-        c = self.connection.cursor()
+        connection = sqlite3.connect(self.DB_FILE)
+        c = connection.cursor()
         c.execute('UPDATE videos SET title = ?, url = ?, description = ?, thumb = ?, published_date = ?, duration = ?, number = ? WHERE id = ?', (video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number'], video['id']))
-        self.connection.commit()
-        self.connection.close()
+        connection.commit()
+        connection.close()
         
     def update_number(self, video_id: str, number: str) -> None:
         """Update video number in database"""
-        c = self.connection.cursor()
+        connection = sqlite3.connect(self.DB_FILE)
+        c = connection.cursor()
         c.execute('UPDATE videos SET number = ? WHERE id = ?', (number, video_id))
-        self.connection.commit()
-        self.connection.close()
+        connection.commit()
+        connection.close()
         
     def read_ids(self) -> list:
         """Read all video ids from database"""
-        c = self.connection.cursor()
+        connection = sqlite3.connect(self.DB_FILE)
+        c = connection.cursor()
         c.execute('SELECT id FROM videos')
         rows = c.fetchall()
         rows = [r[0] for r in rows]
-        self.connection.close()
+        connection.close()
         return rows
     
     def read(self, video_id: str) -> list:
         """Read video from database"""
-        c = self.connection.cursor()
+        connection = sqlite3.connect(self.DB_FILE)
+        c = connection.cursor()
         c.execute("SELECT * FROM videos WHERE id = '" + video_id + "'")
         row = c.fetchone()
-        self.connection.close()
+        connection.close()
         return row
 
     def read_videos(self, order='ASC'):
@@ -157,7 +162,8 @@ class Videos(Database):
         Returns:
             list: list of videos
         """
-        c = self.connection.cursor()
+        connection = sqlite3.connect(self.DB_FILE)
+        c = connection.cursor()
         sql = '''
         SELECT * FROM videos 
         WHERE duration > 1600 
@@ -169,5 +175,5 @@ class Videos(Database):
         '''
         c.execute(sql)
         rows = c.fetchall()
-        self.connection.close()
+        connection.close()
         return rows
