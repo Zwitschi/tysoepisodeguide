@@ -19,15 +19,15 @@
                     <thead>
                         <tr>
                             <th class="ep-thumb"></th>
-                            <th><a href="/guest/{{ guest.name }}?sort={{ order }}">Episode</a></th>
-                            <th><a href="/guest/{{ guest.name }}?sort={{ order }}">Date</a></th>
+                            <th><a href="/guest/{{ guest.name }}?sort={% if order == 'ASC' %}DESC{% else %}ASC{% endif %}">Episode</a></th>
+                            <th><a href="/guest/{{ guest.name }}?sort={% if order == 'ASC' %}DESC{% else %}ASC{% endif %}">Date</a></th>
                             <th>Title</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for e in guest.episodes %}
                         <tr class="ep-row">
-                            <td class="ep-thumb"><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.url }}" target="_blank"><img class="ep-img" src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" alt="{{ e.title }}" /></a>
+                            <td class="ep-thumb"><a id="episode-{{ e.id }}" class="ep-link" href="{{ e.url }}" target="_blank"><img class="ep-img" src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" alt="{{ e.title }}" /></a>
                             <td><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.id }}">#{{ e.number }}</a></td>
                             <td><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.id }}">{{ e.formatted_date }}</a></td>
                             <td><a id="episode-{{ e.id }}" class="ep-link" href="/episode/{{ e.id }}">{{ e.title }}</a></td>

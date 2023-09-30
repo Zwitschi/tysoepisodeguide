@@ -15,16 +15,17 @@ Compress(app)
 
 ## helper function for sort order
 def sort_order(request):
-    order = 'ASC'
-    reverse = 'DESC'
-    # get sort order from request args (if present)
+    # initialize sort order with empty string
+    order = ''
+    # get sort order from request args if present
     if 'sort' in request.args:
         order = request.args.get('sort', order, type = str)
     # only allow ASC or DESC
     if order not in ['ASC', 'DESC']:
         order = 'ASC'
-    order = reverse if order == 'ASC' else 'ASC'
-    return order    
+    reverse = 'DESC'
+    order = reverse if order == 'DESC' else 'ASC'
+    return order
 
 # Routes
 @app.route('/')
