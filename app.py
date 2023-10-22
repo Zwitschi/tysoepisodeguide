@@ -5,7 +5,7 @@ from flask import Flask, render_template, request
 from classes.database import Videos
 from classes.episode import Episode
 from classes.guestlist import Guestlist
-from setup import update_db, load_about_content, load_license_content
+from setup import update_db, load_content
 ## add gzip compression
 from flask_compress import Compress
 
@@ -75,25 +75,25 @@ def guest(guest_name):
 def about():
     return render_template(
         'about.html',
-        about=load_about_content()
+        about=load_content('about')
     )
 
 @app.route('/LICENSE')
 def license():
     return render_template(
         'about.html',
-        about=load_license_content()
+        about=load_content('license')
     )
 
 @app.route('/update')
 def update():
     ret_str = update_db()
-    about = '<h1>Update complete</h1>'
+    update = '<h1>Update complete</h1>'
     for line in ret_str.split('\n'):
-        about += '<pre>' + line + '</pre>\n'
+        update += '<pre>' + line + '</pre>\n'
     return render_template(
         'about.html',
-        about=about
+        content=update
     )
 
 # routes for images

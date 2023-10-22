@@ -28,6 +28,9 @@ class EpisodeGuests:
         title_parts = self.title.split(' - The Sleepover Series:')
         if len(title_parts) > 1:
             self.title = title_parts[0]
+            
+        if '(feat. Uncle Bob)' in self.title:
+            self.title = self.title.replace('(feat. Uncle Bob)', ' + Uncle Bob')
 
         title_parts = self.title.split('(')
         if len(title_parts) > 1:

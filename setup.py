@@ -13,18 +13,17 @@ from utils.timing import sleep_with_delay
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
 
-def load_about_content() -> str:
-    """Load ABOUT.md and README.md files and convert markdown to html"""
-    with open('ABOUT.md', 'r') as f:
-        about = f.read()
-    with open('README.md', 'r') as f:
-        readme = f.read()
-    return markdown.markdown(about) + '\n' + markdown.markdown(readme)
-
-def load_license_content() -> str:
-    """Load LICENSE markdown file and return html string"""
-    with open('LICENSE', 'r') as f:
-        license = f.read()
+def load_content(content) -> str:
+    """Load markdown file and convert markdown to html"""
+    if content == 'about':
+        with open('ABOUT.md', 'r') as f:
+            about = f.read()
+        with open('README.md', 'r') as f:
+            readme = f.read()
+        return markdown.markdown(about) + '\n' + markdown.markdown(readme)
+    elif content == 'license':
+        with open('LICENSE', 'r') as f:
+            license = f.read()
         return markdown.markdown(license)
 
 def get_youtube_video_ids() -> list:
