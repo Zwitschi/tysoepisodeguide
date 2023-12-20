@@ -294,16 +294,17 @@ def main(*args):
     """
     # check command line arguments
     action, force = action_from_arguments(*args)
+    db = Database()
     # execute action
     if action == 'install':
         # install database
-        Database.install()
+        db.install()
         # update database
         update_db(force)
     elif action == 'update':
         # check if database is installed
-        if not Database.check_install():
-            Database.install()
+        if not db.check_install():
+            db.install()
         # update database
         update_db(force)
     elif action == 'thumbnails':

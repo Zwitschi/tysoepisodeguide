@@ -47,20 +47,6 @@ The episode guide markdown file is used to generate the episode guide HTML file,
 ## Contributions
 
 Contributions are welcome. Please open an issue or submit a pull request.
-To contribute, use the following steps:
-
-1. Clone the repository
-2. Install the requirements with `pip install -r requirements.txt`
-3. Create and enable a virtual environment (venv) named "tyso" using the steps mentioned above.
-4. Create a `.env` file in the root directory of the repository.
-5. Add the following to the `.env` file: `API_KEY=<your_api_key>`
-6. Run `python setup.py install` to generate the episode guide.
-7. Make your changes.
-8. Run `python app.py` to run the Flask app and test your changes.
-9. Open `http://127.0.0.1:5000/` in a browser to view the episode guide and ensure your changes work as expected.
-10. Submit a pull request, describing the changes you've made and any relevant information.
-
-By following these steps, you can create a virtual environment, set up the necessary environment variables, and contribute to the project while maintaining a clean and isolated development environment.
 
 ## License
 
