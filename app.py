@@ -47,7 +47,9 @@ def index():
 
 @app.route('/episode/<episode_id>')
 def episode(episode_id):
-    e = Videos.read(episode_id)
+    v = Videos()
+    video_id = episode_id
+    e = v.read(video_id=video_id)
     return render_template(
         'episode.html', 
         episode=Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6]).to_dict()
