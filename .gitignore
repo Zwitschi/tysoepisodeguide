@@ -5,3 +5,4 @@ __pycache__
 /tyso
 /tyso/*
 pyvenv.cfg
+cleanup.ps1
