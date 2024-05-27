@@ -8,7 +8,7 @@ class EpisodeGuests:
     def clean_title(self):
         title_mappings = {
             'Uncle Bob': 'Uncle Bob + ',
-            '(feat. Uncle Bob)': 'Uncle Bob + '
+            '(feat. Uncle Bob)': 'Uncle Bob + ',
             'Are You Garbage': 'Kevin James Ryan + Henry Foley',
             'Chad and JT': 'Chad Kroeger + JT Parr',
             'Howie Mandel meets The Family': 'Howie Mandel + Mom + Dad',
