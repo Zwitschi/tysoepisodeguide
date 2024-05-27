@@ -7,8 +7,6 @@ class EpisodeGuests:
 
     def clean_title(self):
         title_mappings = {
-            'Uncle Bob': 'Uncle Bob + ',
-            '(feat. Uncle Bob)': 'Uncle Bob + ',
             'Are You Garbage': 'Kevin James Ryan + Henry Foley',
             'Chad and JT': 'Chad Kroeger + JT Parr',
             'Howie Mandel meets The Family': 'Howie Mandel + Mom + Dad',
@@ -30,7 +28,7 @@ class EpisodeGuests:
         if len(title_parts) > 1:
             self.title = title_parts[0]
             
-        if '(feat. Uncle Bob)' in self.title:
+        if 'Uncle Bob' in self.title:
             self.title = self.title.replace('(feat. Uncle Bob)', ' + Uncle Bob')
 
         title_parts = self.title.split('(')

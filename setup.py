@@ -213,7 +213,7 @@ def update_db(force: bool = False) -> str:
     # check if channel was updated in the last 24 hours
     if c.check_channel_update_db() == False or force == True:
         # channel was not updated in the last 24 hours, get videos from youtube API
-        print('Getting videos from YouTube API')
+        ret_str += 'Getting videos from YouTube API\n'
         video_ids = get_youtube_video_ids()
         # update channel last updated
         c.set_last_updated(datetime.now().timestamp())
@@ -227,9 +227,10 @@ def update_db(force: bool = False) -> str:
     # Get the episode details from the video ids
     for video_id in video_ids:
         # check if video is in db:
+        ret_str += 'Checking video: ' + video_id + '\n'
         v = Videos()
         video = v.read(video_id)
-        
+                
         if video:
             # check if video details have been saved yet
             if video[1] == None:
