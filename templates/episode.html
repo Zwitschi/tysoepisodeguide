@@ -27,7 +27,7 @@ block head %}{{ super() }}
           endif %} <a href="/guest/{{ g }}">{{ g }}</a> {% endfor %}</span
         >
       </p>
-      <a class="ep-link" href="/episode/{{ episode.id }}" target="_blank">
+      <a class="ep-link" href="{{ episode.url }}" target="_blank">
         <h2 class="ep-title">{{ episode.title }}</h2>
         <span>Watch on YouTube</span></a
       ><br />
