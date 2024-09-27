@@ -51,7 +51,7 @@ def db_last_modified():
     last_modified = os.path.getmtime('db/tysodb.db')
     # convert the last modified date to a datetime object
     last_modified = datetime.fromtimestamp(last_modified)
-    return last_modified
+    return last_modified.strftime('%Y-%m-%d')
 
 # Functions
 
