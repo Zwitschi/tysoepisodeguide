@@ -17,5 +17,5 @@ packaging==24.1
 pillow==10.4.0
 requests==2.32.3
 urllib3==2.2.3
-Werkzeug==3.0.4
+Werkzeug==3.0.6
 zstandard==0.23.0
