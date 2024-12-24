@@ -10,7 +10,7 @@ flask-sitemapper==1.8.1
 gunicorn==23.0.0
 idna==3.10
 itsdangerous==2.2.0
-Jinja2==3.1.4
+Jinja2==3.1.5
 Markdown==3.7
 MarkupSafe==2.1.5
 packaging==24.1
