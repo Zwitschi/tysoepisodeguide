@@ -9,6 +9,8 @@ class EpisodeGuests:
         title_mappings = {
             'Are You Garbage': 'Kevin James Ryan + Henry Foley',
             'Chad and JT': 'Chad Kroeger + JT Parr',
+            'Erik Griffin & The Glassman Family': 'Erik Griffin + Mom + Dad',
+            'Erik Griffin 11.0': 'Erik Griffin',
             'Howie Mandel meets The Family': 'Howie Mandel + Mom + Dad',
             'Sarah-Violet & Charles': 'Sarah-Violet Bliss + Charles Rogers',
             'The "AS WEE SEE IT" Episode': 'Sue Ann Pien + Albert Rutecki',
@@ -17,7 +19,10 @@ class EpisodeGuests:
             'The Vegas Dads 2.0 + Adam Ray': 'Dad + Cousin Teddy + Marc + Adam Ray',
             'The Vegas Dads': 'Dad + Cousin Teddy + Marc',
             'Nobodies': 'Hugh Davidson + Larry Dorf + Rachel Ramras',
-            '@whitneycummings': 'Whitney Cummings'
+            '@whitneycummings': 'Whitney Cummings',
+            'Rick Glassman Deciphers Cosmic Wonders (w/ Mathematician)': 'Ashley Christine',
+            'Santa Claus 3.0 | Adam Ray': 'Adam Ray',
+            'Sona Movsesian 6.0 [RICK* NEEDS A FRIEND]': 'Sona Movsesian',
         }
 
         for keyword, replacement in title_mappings.items():
@@ -27,9 +32,10 @@ class EpisodeGuests:
         title_parts = self.title.split(' - The Sleepover Series:')
         if len(title_parts) > 1:
             self.title = title_parts[0]
-            
+
         if 'Uncle Bob' in self.title:
-            self.title = self.title.replace('(feat. Uncle Bob)', ' + Uncle Bob')
+            self.title = self.title.replace(
+                '(feat. Uncle Bob)', ' + Uncle Bob')
 
         title_parts = self.title.split('(')
         if len(title_parts) > 1:
@@ -80,7 +86,7 @@ class EpisodeGuests:
         and_list = [' & ', ' and ', ' AND ']
         for a in and_list:
             self.title = self.title.replace(a, ' + ')
-    
+
     def get_guests(self):
         # create a list of guests
         self.clean_title()
