@@ -5,13 +5,31 @@ class EpisodeGuests:
         self.guests = []
         self.get_guests()
 
-    def clean_title(self):
+    def sleepover_series(self):
+        text = 'The Sleepover Series:'
+        if text in self.title:
+            self.title = self.title.split(text)[0]
+
+    def uncle_bob(self):
+        if 'Uncle Bob' in self.title:
+            self.title = self.title.replace(
+                '(feat. Uncle Bob)', ' + Uncle Bob')
+
+    def clean_by_split(self, spliton):
+        if spliton in self.title:
+            title_parts = self.title.split(spliton)
+            if len(title_parts) > 1:
+                self.title = title_parts[0]
+
+    def clean_by_mapping(self):
         title_mappings = {
             'Are You Garbage': 'Kevin James Ryan + Henry Foley',
             'Chad and JT': 'Chad Kroeger + JT Parr',
             'Erik Griffin & The Glassman Family': 'Erik Griffin + Mom + Dad',
             'Erik Griffin 11.0': 'Erik Griffin',
+            'Harland Willams': 'Harland Williams',
             'Howie Mandel meets The Family': 'Howie Mandel + Mom + Dad',
+            'Jon Dewalt': 'Jon DeWalt',
             'Sarah-Violet & Charles': 'Sarah-Violet Bliss + Charles Rogers',
             'The "AS WEE SEE IT" Episode': 'Sue Ann Pien + Albert Rutecki',
             'Sunday Football w/ The Glassmans': 'Mom + Dad + Uncle Bob + Grandma Gloria',
@@ -22,32 +40,14 @@ class EpisodeGuests:
             '@whitneycummings': 'Whitney Cummings',
             'Rick Glassman Deciphers Cosmic Wonders (w/ Mathematician)': 'Ashley Christine',
             'Santa Claus 3.0 | Adam Ray': 'Adam Ray',
+            'Santa Claus 2.0 | Adam Ray': 'Adam Ray',
             'Sona Movsesian 6.0 [RICK* NEEDS A FRIEND]': 'Sona Movsesian',
         }
-
         for keyword, replacement in title_mappings.items():
             if keyword in self.title:
                 self.title = replacement
 
-        title_parts = self.title.split(' - The Sleepover Series:')
-        if len(title_parts) > 1:
-            self.title = title_parts[0]
-
-        if 'Uncle Bob' in self.title:
-            self.title = self.title.replace(
-                '(feat. Uncle Bob)', ' + Uncle Bob')
-
-        title_parts = self.title.split('(')
-        if len(title_parts) > 1:
-            self.title = title_parts[0]
-
-        title_parts = self.title.split(' aka')
-        if len(title_parts) > 1:
-            self.title = title_parts[0]
-
-        # Remove trailing spaces
-        self.title = self.title.rstrip()
-
+    def clean_by_list_replace(self):
         remove_list = [
             f' - #{self.number}',
             f'- #{self.number}',
@@ -77,6 +77,21 @@ class EpisodeGuests:
         for r in remove_list:
             self.title = self.title.replace(r, '')
 
+    def clean_title(self):
+        self.clean_by_mapping()
+        self.sleepover_series()
+        self.uncle_bob()
+        self.clean_by_split('(')
+        self.clean_by_split('[')
+        self.clean_by_split(' aka')
+        self.clean_by_split(' -')
+
+        # Remove trailing spaces
+        self.title = self.title.rstrip()
+
+        self.clean_by_list_replace()
+
+        # Remove numbers of appearance (1.0, 2.0, etc)
         for n in range(1, 50):
             self.title = self.title.replace(f'{n}.0', '')
 
