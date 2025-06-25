@@ -8,7 +8,7 @@ from classes.guestlist import Guestlist
 from setup import update_db, load_content
 
 # add gzip compression
-from flask_compress import Compress
+# from flask_compress import Compress
 
 # add site map
 from flask_sitemapper import Sitemapper
@@ -18,7 +18,7 @@ app = Flask(__name__, static_url_path='',
             static_folder='static', template_folder='templates')
 
 # enable gzip compression
-Compress(app)
+# Compress(app)
 
 # create sitemapper object
 sitemapper = Sitemapper()
