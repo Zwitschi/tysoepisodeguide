@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 import sys
 import markdown
@@ -13,6 +14,7 @@ from utils.timing import sleep_with_delay
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
 
+
 def load_content(content) -> str:
     """Load markdown file and convert markdown to html"""
     if content == 'about':
@@ -25,6 +27,8 @@ def load_content(content) -> str:
         with open('LICENSE', 'r') as f:
             license = f.read()
         return markdown.markdown(license)
+    return ''
+
 
 def get_youtube_video_ids() -> list:
     """Get the video ids from the channel via API call"""
@@ -40,7 +44,8 @@ def get_youtube_video_ids() -> list:
         newapi = API('videos_next', next_page=api.data['nextPageToken'])
         next_page_res_json = newapi.data
         next_page_items = next_page_res_json['items']
-        next_page_video_ids = [item['id']['videoId'] for item in next_page_items]
+        next_page_video_ids = [item['id']['videoId']
+                               for item in next_page_items]
         video_ids.extend(next_page_video_ids)
         # check if another page exists
         if 'nextPageToken' not in next_page_res_json:
@@ -49,14 +54,17 @@ def get_youtube_video_ids() -> list:
             api.data['nextPageToken'] = next_page_res_json['nextPageToken']
     return video_ids
 
+
 def check_thumbnails() -> None:
     # get all videos from db
-    videos = Videos.read()
+    v = Videos()
+    videos = v.read_videos()
     # check if thumbnail is saved in file system
     for video in videos:
         video_id = video[0]
         thumbnail_format = video[4].split('.')[-1]
-        thumbnail_path = os.path.join(BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
+        thumbnail_path = os.path.join(
+            BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
         if not os.path.exists(thumbnail_path):
             t = Thumbnail(video[4], thumbnail_path)
             t.download()
@@ -65,13 +73,15 @@ def check_thumbnails() -> None:
             t = Thumbnail(video[4], thumbnail_path)
             t.resize()
 
+
 def get_youtube_video(video_id: str) -> dict:
     """Get video and its details from the YouTube API"""
     api = API('video_detail', video_id)
     res_json = api.data
     thumbnail = res_json['items'][0]['snippet']['thumbnails']['high']['url']
     thumbnail_format = thumbnail.split('.')[-1]
-    thumbnail_path = os.path.join(BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
+    thumbnail_path = os.path.join(
+        BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
     Thumbnail(thumbnail, thumbnail_path).download()
     sleep_with_delay(1)
     return {
@@ -83,9 +93,10 @@ def get_youtube_video(video_id: str) -> dict:
         'published_date': res_json['items'][0]['snippet']['publishedAt'],
         'duration': parse_duration(res_json['items'][0]['contentDetails']['duration']),
         'number': 0
-    }    
+    }
 
-def get_video_duration(video_id: str) -> dict:
+
+def get_video_duration(video_id: str) -> Optional[dict]:
     """Get the video duration from the video id"""
     # Create a video duration dictionary
     video_duration = {}
@@ -95,10 +106,11 @@ def get_video_duration(video_id: str) -> dict:
     pagedata = api.data
     # check if there are any results, if not, abort
     if len(pagedata['items']) == 0:
-        return
+        return None
     # get the video duration
     video_duration['duration'] = pagedata['items'][0]['contentDetails']['duration']
     return video_duration
+
 
 def get_episode_yt(video_id: str) -> dict:
     """Get the details of the episode from the Youtube API via video id"""
@@ -111,23 +123,24 @@ def get_episode_yt(video_id: str) -> dict:
         return {}
     # Check if video is an episode
     if not is_episode(
-        res['items'][0]['snippet']['title'], 
+        res['items'][0]['snippet']['title'],
         parse_duration(res['items'][0]['contentDetails']['duration'])
     ):
         return {}
     # Create a video detail dictionary
     episode = {
-        'id' : video_id,
-        'title' : res['items'][0]['snippet']['title'],
-        'url' : 'https://www.youtube.com/watch?v=' + video_id,
-        'description' : res['items'][0]['snippet']['description'],
-        'thumb' : res['items'][0]['snippet']['thumbnails']['high']['url'],
-        'published_date' : res['items'][0]['snippet']['publishedAt'],
-        'duration' : parse_duration(res['items'][0]['contentDetails']['duration']),
-        'number' : get_episode_number(res['items'][0]['snippet']['title'])
+        'id': video_id,
+        'title': res['items'][0]['snippet']['title'],
+        'url': 'https://www.youtube.com/watch?v=' + video_id,
+        'description': res['items'][0]['snippet']['description'],
+        'thumb': res['items'][0]['snippet']['thumbnails']['high']['url'],
+        'published_date': res['items'][0]['snippet']['publishedAt'],
+        'duration': parse_duration(res['items'][0]['contentDetails']['duration']),
+        'number': get_episode_number(res['items'][0]['snippet']['title'])
     }
     # Return the video detail
     return episode
+
 
 def get_channel_details(channel_id: str) -> dict:
     """Query the YouTube API for the channel details"""
@@ -140,40 +153,14 @@ def get_channel_details(channel_id: str) -> dict:
         'last_updated': datetime.now().timestamp()
     }
 
-def check_video_id(video_id: str) -> bool:
-    """
-    Check if the video id is already in database.
-
-    If video id is not in database, get the video details from youtube API and save.
-    If video id is in database, check if video details are saved in database.
-    If only video id is present, get the video details from youtube API and update database.
-    """
-    v = Videos()
-    video = v.read(video_id)
-    if video:
-        # check if video details have been saved yet
-        if video[1] == None:
-            # get video info
-            video = get_youtube_video(video_id)
-            v.update(video)
-        elif video[7] == '0' and is_episode(video[1], video[6]):
-            # get episode number from title
-            number = get_episode_number(video[1])
-            # update episode number
-            v.update_number(video_id, number)
-        return True
-    else:
-        # get video info
-        video = get_youtube_video(video_id)
-        v.insert(video)
-        print('New video: ' + video['title'])
-        return False
 
 def handle_episode_detail(episode: dict) -> str:
     """Handle the episode detail"""
+    msg = ''
     ret_str = ''
     # create episode object
-    ep = Episode(episode['id'], episode['title'], episode['url'], episode['description'], episode['thumb'], episode['published_date'], episode['duration'])
+    ep = Episode(episode['id'], episode['title'], episode['url'], episode['description'],
+                 episode['thumb'], episode['published_date'], episode['duration'])
     # check if episode is in db
     v = Videos()
     row = v.read(episode['id'])
@@ -181,14 +168,92 @@ def handle_episode_detail(episode: dict) -> str:
     if row is not None:
         if is_episode(row[1], row[6]):
             # create episode object from db
-            dbep = Episode(row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+            dbep = Episode(row[0], row[1], row[2],
+                           row[3], row[4], row[5], row[6])
             # if details are not up to date, update
             if ep.title != dbep.title or ep.url != dbep.url or ep.description != dbep.description or ep.number != dbep.number:
                 v.update(episode)
-                ret_str += 'Video details updated: ' + episode['title'] + '\n'
+                msg = 'Video details updated: ' + episode['title']
+                ret_str += msg + '\n'
     return ret_str
-    
-def update_db(force: bool = False) -> str:
+
+
+def get_now_str() -> str:
+    """Get the current date and time as a string"""
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+def check_and_store_channel_details(channels_obj, channel_id):
+    """Ensure channel row exists in DB; yield a message if we insert."""
+    channel_details = channels_obj.read()
+    if channel_details is None:
+        channel_details = get_channel_details(channel_id)
+        channels_obj.insert(channel_details)
+        yield 'Channel details saved to database'
+
+
+def get_video_ids(channel_obj, force_flag: bool):
+    """Yield progress messages and return the list of video ids.
+
+    Uses `yield` for messages and returns the video_ids via StopIteration value.
+    """
+    if channel_obj.check_channel_update_db() == False or force_flag == True:
+        yield 'Getting videos from YouTube API'
+        video_ids = get_youtube_video_ids()
+        channel_obj.set_last_updated(datetime.now().timestamp())
+        channel_obj.update_channel_db()
+        yield 'Videos saved to database'
+        return video_ids
+    else:
+        v = Videos()
+        return v.read_ids()
+
+
+def process_existing_video(video_row):
+    """Process a video row from DB and yield progress messages."""
+    v = Videos()
+    # video_row is the DB row tuple
+    if video_row[1] is None:
+        video = get_youtube_video(video_row[0])
+        v.update(video)
+        yield 'Video details updated in database'
+    elif video_row[7] == '0' and is_episode(video_row[1], video_row[6]):
+        number = get_episode_number(video_row[1])
+        v.update_number(video_row[0], number)
+    # read video detail from db (fresh)
+    video_detail = {
+        'id': video_row[0],
+        'title': video_row[1],
+        'url': video_row[2],
+        'description': video_row[3],
+        'thumb': video_row[4],
+        'published_date': video_row[5],
+        'duration': video_row[6],
+        'number': video_row[7],
+    }
+    yield f"Handling episode detail for: {video_detail['title']}"
+    msg = handle_episode_detail(video_detail)
+    if msg:
+        yield msg
+
+
+def process_new_video(video_id):
+    """Handle a video id that's not in DB yet: fetch, maybe insert, and yield messages."""
+    v = Videos()
+    video = get_youtube_video(video_id)
+    yield f"New video: {video['title']}"
+    video_detail = get_episode_yt(video_id)
+    if video_detail != {}:
+        # only insert if not present (protect against races)
+        if v.read(video_detail['id']) is None:
+            v.insert(video_detail)
+            yield 'Video details saved to database'
+        msg = handle_episode_detail(video_detail)
+        if msg:
+            yield msg
+
+
+def update_db(force: bool = False):
     """
     Initialise the database and create the tables if needed.
     Check the channel details for updates.
@@ -196,73 +261,46 @@ def update_db(force: bool = False) -> str:
     Get the episode details from the video ids.
     Update the database with the episode details if needed.
     """
-    ret_str = '[' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '] Update started\n'
-    # Check if channel details are up to date
-    c = Channels()
-    channel_details = c.read()
+    # Make this function a generator yielding progress messages so callers can
+    # stream updates to clients.
+    msg = '[' + get_now_str() + '] Update started'
+    yield msg
+    # Helper subgenerators to keep code small and testable
 
-    # If there is no record yet, query youtube API and save details
-    if channel_details is None:
-        channel_details = get_channel_details('UCYCGsNTvYxfkPkfQopRMP7w')
-        Channels.insert(channel_details)
-        ret_str += 'Channel details saved to database\n'
-   
-    # create channel object
-    c = Channel('UCYCGsNTvYxfkPkfQopRMP7w')
-    
-    # check if channel was updated in the last 24 hours
-    if c.check_channel_update_db() == False or force == True:
-        # channel was not updated in the last 24 hours, get videos from youtube API
-        ret_str += 'Getting videos from YouTube API\n'
-        video_ids = get_youtube_video_ids()
-        # update channel last updated
-        c.set_last_updated(datetime.now().timestamp())
-        c.update_channel_db()
-        ret_str += 'Videos saved to database\n'
-    else:
-        # channel was updated in the last 24 hours, get videos from db
-        v = Videos()
-        video_ids = v.read_ids()
-    
-    # Get the episode details from the video ids
+    # perform work using the helpers
+    channels = Channels()
+    yield from check_and_store_channel_details(channels, 'UCYCGsNTvYxfkPkfQopRMP7w')
+
+    channel = Channel('UCYCGsNTvYxfkPkfQopRMP7w')
+    # get video ids (subgenerator returns list)
+    video_ids = yield from get_video_ids(channel, force)
+
     for video_id in video_ids:
-        # check if video is in db:
-        ret_str += 'Checking video: ' + video_id + '\n'
         v = Videos()
-        video = v.read(video_id)
-                
-        if video:
-            # check if video details have been saved yet
-            if video[1] == None:
-                # get video info
-                video = get_youtube_video(video_id)
-                v.update(video)
-                ret_str += 'Video details updated in database\n'
-            elif video[7] == '0' and is_episode(video[1], video[6]):
-                # get episode number from title
-                number = get_episode_number(video[1])
-                # update episode number
-                v.update_number(video_id, number)
-            # read video detail from db
-            video_detail = {'id': video[0], 'title': video[1], 'url': video[2], 'description': video[3], 'thumb': video[4], 'published_date': video[5], 'duration': video[6], 'number': video[7]}
-            ret_str += handle_episode_detail(video_detail)
-            
+        row = v.read(video_id)
+        if row:
+            yield from process_existing_video(row)
         else:
-            # get video info
-            video = get_youtube_video(video_id)
-            ret_str += 'New video: ' + video['title'] + '\n'
-            # get video detail from youtube API
-            video_detail = get_episode_yt(video_id)
-            if video_detail != {}:
-                v.insert(video_detail)
-                ret_str += handle_episode_detail(video_detail)
-    ret_str += '[' + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '] Update finished\n'
-    return ret_str
-                
-def action_from_arguments(*args) -> None:
+            yield from process_new_video(video_id)
+
+    yield '[' + get_now_str() + '] Update finished'
+
+
+def update_db_collect(force: bool = False) -> str:
+    """Compatibility wrapper for callers that expect a single string return.
+
+    This collects all yielded messages and returns a newline-separated string.
+    """
+    parts = []
+    for m in update_db(force=force):
+        parts.append(m)
+    return '\n'.join(parts) + '\n'
+
+
+def action_from_arguments(*args) -> tuple[str, bool]:
     """
     Check the command line arguments and execute the appropriate function
-    
+
     Accepts arguments: install, update, force, thumbnails
     Default is 'update'
     """
@@ -285,10 +323,12 @@ def action_from_arguments(*args) -> None:
             action = 'update'
             force = True
     else:
-        print('Usage: python setup.py [install|update [force]|force|thumbnails]')
+        print(
+            'Usage: python setup.py [install|update [force]|force|thumbnails]')
         sys.exit(1)
     return action, force
-                
+
+
 def main(*args):
     """
     Main function
@@ -300,22 +340,24 @@ def main(*args):
     if action == 'install':
         # install database
         db.install()
-        # update database
-        update_db(force)
+        # update database (CLI callers expect a collected string)
+        update_db_collect(force)
     elif action == 'update':
         # check if database is installed
         if not db.check_install():
             db.install()
-        # update database
-        update_db(force)
+        # update database (CLI callers expect a collected string)
+        update_db_collect(force)
     elif action == 'thumbnails':
         # check thumbnails
         check_thumbnails()
     else:
-        print('Usage: python setup.py [install|update [force]|force|thumbnails]')
+        print(
+            'Usage: python setup.py [install|update [force]|force|thumbnails]')
         sys.exit(1)
     # exit
     sys.exit(0)
+
 
 if __name__ == '__main__':
     main(*sys.argv[1:])

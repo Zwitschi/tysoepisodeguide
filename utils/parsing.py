@@ -1,5 +1,6 @@
 import re
 
+
 def parse_duration(duration: str) -> int:
     """
     Get the duration in seconds from the duration string
@@ -8,7 +9,7 @@ def parse_duration(duration: str) -> int:
     """
     # Create a duration seconds variable
     duration_seconds = 0
-    duration = duration.replace('PT','')
+    duration = duration.replace('PT', '')
     duration_hours = 0
     duration_minutes = 0
     duration_seconds = 0
@@ -20,24 +21,27 @@ def parse_duration(duration: str) -> int:
         duration = duration.split('M')[1]
     if 'S' in duration:
         duration_seconds = int(duration.split('S')[0])
-    duration_seconds = duration_hours * 3600 + duration_minutes * 60 + duration_seconds
+    duration_seconds = duration_hours * 3600 + \
+        duration_minutes * 60 + duration_seconds
     # check if is integer
     if duration_seconds != int(duration_seconds):
         print('Error: duration is not an integer')
-        return
+        return 0
     # check if duration is greater than 0
     if duration_seconds < 0:
         print('Error: duration is less than 0')
-        return
+        return 0
     # Return the duration in seconds
     return int(duration_seconds)
 
+
 def is_episode(episode_title: str, duration: int):
     """Filter video for full episodes of Take Your Shoes Off"""
-    if duration > 1600 and ('Take Your Shoes Off' in episode_title or 'TYSO' in episode_title):
+    if duration > 1200 and ('Take Your Shoes Off' in episode_title or 'TYSO' in episode_title):
         return True
     else:
         return False
+
 
 def get_episode_number(video_title: str) -> str:
     """Get the episode number from the video title"""
@@ -45,32 +49,31 @@ def get_episode_number(video_title: str) -> str:
     episode_number = 0
     # exceptions
     if '#' not in video_title and 'Balcony Series' in video_title:
-        # try to get the episode number from the title with regex, only consider numbers and . 
+        # try to get the episode number from the title with regex, only consider numbers and .
         episode_number = re.findall(r'[\d\.]+', video_title)
         if len(episode_number) > 0:
             # get the first match
             episode_number = episode_number[0]
     elif '#' not in video_title and '50th' in video_title:
-        return 50
+        episode_number = 50
     elif 'BEST OF' in video_title or 'PATREON UNLOCKED' in video_title:
-        return 0
+        episode_number = 0
     else:
         # Get the episode number from title, split at '#' character to find the episode number
         episode_number = video_title.split('#')[1]
         # additional checks on episode number, remove ')', '!' and replace ' pt ' with '.'
-        episode_number = episode_number.replace(')','')
-        episode_number = episode_number.replace('!','')
-        episode_number = episode_number.replace(' pt ','.')    
+        episode_number = episode_number.replace(')', '')
+        episode_number = episode_number.replace('!', '')
+        episode_number = episode_number.replace(' pt ', '.')
         # shorten
         episode_number = episode_number.split(' ')[0]
-    
-    # check if episode number is 0
-    if episode_number == 0:
-        return episode_number
-    elif '.' in episode_number:
-        # if number contains a '.' then cast as float
-        episode_number = float(episode_number)
-    else:
-        # cast as int
-        episode_number = int(episode_number)
-    return str(episode_number)
+        if '.' in episode_number:
+            # if number contains a '.' then cast as float
+            episode_number = float(episode_number)
+        else:
+            # cast as int
+            episode_number = int(episode_number)
+    num_str = str(episode_number)
+    if num_str.endswith('.0'):
+        num_str = num_str[:-2]
+    return num_str
