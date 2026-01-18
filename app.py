@@ -137,7 +137,7 @@ DB_LAST_MODIFIED = db_last_modified()
 @app.route('/')
 def index():
     display = 'table'
-    display = 'thumbs'
+    # display = 'thumbs'
     order = sort_order(request)
     # get episodes from database
     episodes = get_videos(order)

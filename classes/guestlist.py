@@ -1,3 +1,5 @@
+from typing import Optional
+
 from classes.database import Videos
 from classes.episode import Episode
 from classes.guest import Guest
@@ -8,7 +10,7 @@ class Guestlist:
         self.order = order
         self.guests = self.guest_list()
 
-    def guest_list(self, order: str = None) -> list:
+    def guest_list(self, order: Optional[str] = None) -> list:
         """Create the list of guests for the guests page"""
         if order is None:
             order = self.order
