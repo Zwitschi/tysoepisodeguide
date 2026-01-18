@@ -69,7 +69,7 @@ head %}{{ super() }}
 {% else %}
 <!-- Thumbnails view -->
 <div class="row justify-content-center">
-  {% for e in episodes %}
+  {% if limit > 0 %} {% for e in episodes[:limit] %}
   <div class="col-6 text-center">
     <a
       id="episode-{{ e.number }}"
@@ -80,6 +80,17 @@ head %}{{ super() }}
       <img src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" />
     </a>
   </div>
-  {% endfor %}
+  {% endfor %} {% else %} {% for e in episodes %}
+  <div class="col-6 text-center">
+    <a
+      id="episode-{{ e.number }}"
+      class="ep-link"
+      href="{{ e.url }}"
+      target="_blank"
+    >
+      <img src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" />
+    </a>
+  </div>
+  {% endfor %} {% endif %}
 </div>
 {% endif %} {% endblock %}

@@ -75,6 +75,27 @@ def sort_order(request):
     order = reverse if order == 'DESC' else 'ASC'
     return order
 
+
+def set_view_mode(request):
+    # initialize view mode with empty string
+    view = ''
+    # get view mode from request args if present
+    if 'view' in request.args:
+        view = request.args.get('view', view, type=str)
+    # only allow 'table' or 'thumbs'
+    if view not in ['table', 'thumbs']:
+        view = 'table'
+    return view
+
+
+def set_limit(request):
+    # initialize limit with 0
+    limit = 0
+    # get limit from request args if present
+    if 'limit' in request.args:
+        limit = request.args.get('limit', limit, type=int)
+    return limit
+
 # helper function for database last modified date
 
 
@@ -136,9 +157,9 @@ DB_LAST_MODIFIED = db_last_modified()
 @sitemapper.include(lastmod=DB_LAST_MODIFIED, changefreq='weekly', priority=0.8)
 @app.route('/')
 def index():
-    display = 'table'
-    # display = 'thumbs'
+    display = set_view_mode(request)
     order = sort_order(request)
+    limit = set_limit(request)
     # get episodes from database
     episodes = get_videos(order)
     # render the template
@@ -146,7 +167,8 @@ def index():
         'index.html',
         episodes=episodes,
         order=order,
-        display=display
+        display=display,
+        limit=limit
     )
 
 
