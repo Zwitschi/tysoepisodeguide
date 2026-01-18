@@ -1,37 +1,85 @@
-{% extends "_base.html" %}
-{% block title %}Episode Guide{% endblock %}
-{% block head %}{{ super() }}
-<meta name="description" content="Episode Guide for the Take Your Shoes Off with Rick Glassman">
+{% extends "_base.html" %} {% block title %}Episode Guide{% endblock %} {% block
+head %}{{ super() }}
+<meta
+  name="description"
+  content="Episode Guide for the Take Your Shoes Off with Rick Glassman"
+/>
 <meta property="og:title" content="Take Your Shoes Off with Rick Glassman" />
-<meta property="og:description" content="Take Your Shoes Off with Rick Glassman" />
-<meta name="twitter:description" content="Take Your Shoes Off with Rick Glassman" />
+<meta
+  property="og:description"
+  content="Take Your Shoes Off with Rick Glassman"
+/>
+<meta
+  name="twitter:description"
+  content="Take Your Shoes Off with Rick Glassman"
+/>
 <meta name="twitter:title" content="Take Your Shoes Off with Rick Glassman" />
 <link rel="canonical" href="https://tysoepisodeguide.azurewebsites.net/" />
 <script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
-{% endblock %}
-{% block content %}
+{% endblock %} {% block content %} {% if display=="table" %}
 <div class="row justify-content-center">
-    <div class="col-12">
-        <table id="episode-guide" class="table table-dark table-striped table-bordered table-hover">
-            <thead class="thead-dark">
-                <tr>
-                    <th class="ep-thumb"></th>
-                    <th><a href="?sort={% if order == 'ASC' %}DESC{% else %}ASC{% endif %}">Episode</a></th>
-                    <th>Title</th>
-                    <th>Guest</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for e in episodes %}
-            <tr class="ep-row">
-                <td class="ep-thumb"><a id="episode-{{ e.number }}" class="ep-link" href="{{ e.url }}" target="_blank"><img class="ep-img" src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" /></a></td>
-                <td><a class="ep-link" href="/episode/{{ e.id }}">#{{ e.number }}</a></td>
-                <td class="ep-title"><a class="ep-link" href="/episode/{{ e.id }}">{{ e.title }}</a></td>
-                <td class="ep-guest">{% for g in e.guest %}{% if loop.index > 1 %} &dash; {% endif %} <a href="/guest/{{ g }}">{{ g }}</a> {% endfor %}</td>
-            </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+  <div class="col-12">
+    <table
+      id="episode-guide"
+      class="table table-dark table-striped table-bordered table-hover"
+    >
+      <thead class="thead-dark">
+        <tr>
+          <th class="ep-thumb"></th>
+          <th>
+            <a href="?sort={% if order == 'ASC' %}DESC{% else %}ASC{% endif %}"
+              >Episode</a
+            >
+          </th>
+          <th>Title</th>
+          <th>Guest</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in episodes %}
+        <tr class="ep-row">
+          <td class="ep-thumb">
+            <a
+              id="episode-{{ e.number }}"
+              class="ep-link"
+              href="{{ e.url }}"
+              target="_blank"
+              ><img
+                class="ep-img"
+                src="/thumbs/{{ e.id }}.jpg"
+                title="{{ e.title }}"
+            /></a>
+          </td>
+          <td>
+            <a class="ep-link" href="/episode/{{ e.id }}">#{{ e.number }}</a>
+          </td>
+          <td class="ep-title">
+            <a class="ep-link" href="/episode/{{ e.id }}">{{ e.title }}</a>
+          </td>
+          <td class="ep-guest">
+            {% for g in e.guest %}{% if loop.index > 1 %} &dash; {% endif %}
+            <a href="/guest/{{ g }}">{{ g }}</a> {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
-{% endblock %}
+{% else %}
+<!-- Thumbnails view -->
+<div class="row justify-content-center">
+  {% for e in episodes %}
+  <div class="col-6 text-center">
+    <a
+      id="episode-{{ e.number }}"
+      class="ep-link"
+      href="{{ e.url }}"
+      target="_blank"
+    >
+      <img src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" />
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% endif %} {% endblock %}

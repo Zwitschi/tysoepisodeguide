@@ -186,7 +186,7 @@ def get_now_str() -> str:
 def check_and_store_channel_details(channels_obj, channel_id):
     """Ensure channel row exists in DB; yield a message if we insert."""
     channel_details = channels_obj.read()
-    if channel_details is None:
+    if channel_details['id'] is None:
         channel_details = get_channel_details(channel_id)
         channels_obj.insert(channel_details)
         yield 'Channel details saved to database'

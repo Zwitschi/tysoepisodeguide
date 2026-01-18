@@ -79,8 +79,12 @@ def sort_order(request):
 
 
 def db_last_modified():
+    dbpath = os.path.join(os.path.dirname(__file__), 'db')
+    dbfile = os.path.join(dbpath, 'tysodb.db')
+    if not os.path.exists(dbfile):
+        return '1970-01-01'
     # get the last modified date of the database
-    last_modified = os.path.getmtime('db/tysodb.db')
+    last_modified = os.path.getmtime(dbfile)
     # convert the last modified date to a datetime object
     last_modified = datetime.fromtimestamp(last_modified)
     return last_modified.strftime('%Y-%m-%d')
@@ -132,6 +136,8 @@ DB_LAST_MODIFIED = db_last_modified()
 @sitemapper.include(lastmod=DB_LAST_MODIFIED, changefreq='weekly', priority=0.8)
 @app.route('/')
 def index():
+    display = 'table'
+    display = 'thumbs'
     order = sort_order(request)
     # get episodes from database
     episodes = get_videos(order)
@@ -139,7 +145,8 @@ def index():
     return render_template(
         'index.html',
         episodes=episodes,
-        order=order
+        order=order,
+        display=display
     )
 
 
