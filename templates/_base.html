@@ -1,20 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<title>{% block title %}{% endblock %} - Take Your Shoes Off with Rick Glassman</title>
-{% include '_head.html' %}{% block head %}{% endblock %}
-</head>
-<body>
-<div id="header">
-{% include '_nav.html' %}
-</div>
-<div id="content">
-{% block content %}{% endblock %}
-</div>
-<div id="footer">
-{% block footer %}
-&copy; 2023 TYSO Episode Guide by <a href="https://zwitschi.net/" target="_blank">Zwitschi</a> for <a href="https://www.rickglassman.com/" target="_blank">Take Your Shoes Off with Rick Glassman</a>
-{% endblock %}
-</div>
-</body>
+  <head>
+    <title>
+      {% block title %}{% endblock %} - Take Your Shoes Off with Rick Glassman
+    </title>
+    {% include '_head.html' %}{% block head %}{% endblock %}
+  </head>
+  <body>
+    {% block header %}
+    <div id="header">{% include '_nav.html' %}</div>
+    {% endblock %}
+    <div id="content">{% block content %}{% endblock %}</div>
+    {% block footer %}
+    <div id="footer">
+      &copy; 2023 TYSO Episode Guide by
+      <a href="https://zwitschi.net/" target="_blank">Zwitschi</a> for
+      <a href="https://www.rickglassman.com/" target="_blank"
+        >Take Your Shoes Off with Rick Glassman</a
+      >
+    </div>
+    {% endblock %}
+  </body>
 </html>

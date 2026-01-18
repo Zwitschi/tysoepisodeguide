@@ -16,7 +16,8 @@ head %}{{ super() }}
 <meta name="twitter:title" content="Take Your Shoes Off with Rick Glassman" />
 <link rel="canonical" href="https://tysoepisodeguide.azurewebsites.net/" />
 <script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
-{% endblock %} {% block content %} {% if display=="table" %}
+{% endblock %} {% block header %} {% if view=='thumbs'%} {% endif %} {% endblock
+%} {% block content %} {% if display=="table" %}
 <div class="row justify-content-center">
   <div class="col-12">
     <table
@@ -92,5 +93,13 @@ head %}{{ super() }}
     </a>
   </div>
   {% endfor %} {% endif %}
+</div>
+{% endif %} {% endblock %} {% block footer %} {% if view=='table'%}
+<div id="footer">
+  &copy; 2023 TYSO Episode Guide by
+  <a href="https://zwitschi.net/" target="_blank">Zwitschi</a> for
+  <a href="https://www.rickglassman.com/" target="_blank"
+    >Take Your Shoes Off with Rick Glassman</a
+  >
 </div>
 {% endif %} {% endblock %}
