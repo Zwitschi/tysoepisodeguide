@@ -1,43 +1,45 @@
 import os
 import sqlite3
 
+
 class Database:
     def __init__(self) -> None:
         self.BASE_DIR = os.getcwd()
         self.DB_FILE = os.path.join(self.BASE_DIR, 'db', 'tysodb.db')
         self.connection = sqlite3.connect(self.DB_FILE)
         self.install()
-        
+
     def create_tables(self) -> None:
         """Calls create functions for Channels and Videos"""
         Channels().create()
         Videos().create()
-        
+
     def create_db(self) -> None:
         """Create database file"""
         c = self.connection.cursor()
         c.execute('''SELECT * FROM sqlite_master WHERE type='table' ''')
         self.connection.close()
-        
+
     def install(self) -> None:
         """Install the database and create the tables if needed."""
         if not os.path.exists(os.path.join(self.BASE_DIR, 'db')):
             os.makedirs(os.path.join(self.BASE_DIR, 'db'))
         if not os.path.exists(self.DB_FILE):
             self.create_tables()
-            
+
     def check_install(self) -> bool:
         """Check if database is installed"""
         if os.path.exists(self.DB_FILE):
             return True
         else:
             return False
-    
+
+
 class Channels(Database):
     def __init__(self) -> None:
         super().__init__()
         self.connection = sqlite3.connect(self.DB_FILE)
-        
+
     def create(self) -> None:
         """
         Create channel table
@@ -56,7 +58,7 @@ class Channels(Database):
         ''')
         self.connection.commit()
         self.connection.close()
-        
+
     def insert(self, channel: dict) -> None:
         """
         Insert channel into database
@@ -65,7 +67,8 @@ class Channels(Database):
             channel (dict): channel details
         """
         c = self.connection.cursor()
-        c.execute('INSERT INTO channels (id, title, url, last_updated) VALUES (?, ?, ?, ?)', (channel['id'], channel['title'], channel['url'], channel['last_updated']))
+        c.execute('INSERT INTO channels (id, title, url, last_updated) VALUES (?, ?, ?, ?)',
+                  (channel['id'], channel['title'], channel['url'], channel['last_updated']))
         self.connection.commit()
         self.connection.close()
 
@@ -84,12 +87,13 @@ class Channels(Database):
             }
             return channel
         else:
-            return None
-        
+            return {}
+
+
 class Videos(Database):
     def __init__(self) -> None:
         super().__init__()
-        
+
     def create(self) -> None:
         """Create videos table in database"""
         connection = sqlite3.connect(self.DB_FILE)
@@ -108,31 +112,34 @@ class Videos(Database):
         ''')
         connection.commit()
         connection.close()
-    
+
     def insert(self, video: dict) -> None:
         """Insert video into database"""
         connection = sqlite3.connect(self.DB_FILE)
         c = connection.cursor()
-        c.execute('INSERT INTO videos (id, title, url, description, thumb, published_date, duration, number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (video['id'], video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number']))
+        c.execute('INSERT INTO videos (id, title, url, description, thumb, published_date, duration, number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                  (video['id'], video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number']))
         connection.commit()
         connection.close()
-    
+
     def update(self, video: dict) -> None:
         """Update video in database"""
         connection = sqlite3.connect(self.DB_FILE)
         c = connection.cursor()
-        c.execute('UPDATE videos SET title = ?, url = ?, description = ?, thumb = ?, published_date = ?, duration = ?, number = ? WHERE id = ?', (video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number'], video['id']))
+        c.execute('UPDATE videos SET title = ?, url = ?, description = ?, thumb = ?, published_date = ?, duration = ?, number = ? WHERE id = ?',
+                  (video['title'], video['url'], video['description'], video['thumb'], video['published_date'], video['duration'], video['number'], video['id']))
         connection.commit()
         connection.close()
-        
+
     def update_number(self, video_id: str, number: str) -> None:
         """Update video number in database"""
         connection = sqlite3.connect(self.DB_FILE)
         c = connection.cursor()
-        c.execute('UPDATE videos SET number = ? WHERE id = ?', (number, video_id))
+        c.execute('UPDATE videos SET number = ? WHERE id = ?',
+                  (number, video_id))
         connection.commit()
         connection.close()
-        
+
     def read_ids(self) -> list:
         """Read all video ids from database"""
         connection = sqlite3.connect(self.DB_FILE)
@@ -142,7 +149,7 @@ class Videos(Database):
         rows = [r[0] for r in rows]
         connection.close()
         return rows
-    
+
     def read(self, video_id: str) -> list:
         """Read video from database"""
         connection = sqlite3.connect(self.DB_FILE)
