@@ -7,12 +7,12 @@ from classes.episode import Episode
 from classes.channel import Channel
 from classes.database import Database, Channels, Videos
 from classes.thumbnail import Thumbnail
-from utils.api import API
 from utils.parsing import parse_duration, is_episode, get_episode_number
-from utils.timing import sleep_with_delay
+from utils.youtube import YouTubeClient, get_client
 
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
+CHANNEL_ID = 'UCYCGsNTvYxfkPkfQopRMP7w'
 
 
 def load_content(content) -> str:
@@ -28,31 +28,6 @@ def load_content(content) -> str:
             license = f.read()
         return markdown.markdown(license)
     return ''
-
-
-def get_youtube_video_ids() -> list:
-    """Get the video ids from the channel via API call"""
-    api = API('videos')
-    items = api.data['items']
-    video_ids = []
-    for item in items:
-        video_id = item['id']['videoId']
-        if video_id not in video_ids:
-            video_ids.append(video_id)
-
-    while api.data['nextPageToken']:
-        newapi = API('videos_next', next_page=api.data['nextPageToken'])
-        next_page_res_json = newapi.data
-        next_page_items = next_page_res_json['items']
-        next_page_video_ids = [item['id']['videoId']
-                               for item in next_page_items]
-        video_ids.extend(next_page_video_ids)
-        # check if another page exists
-        if 'nextPageToken' not in next_page_res_json:
-            break
-        else:
-            api.data['nextPageToken'] = next_page_res_json['nextPageToken']
-    return video_ids
 
 
 def check_thumbnails() -> None:
@@ -74,83 +49,88 @@ def check_thumbnails() -> None:
             t.resize()
 
 
-def get_youtube_video(video_id: str) -> dict:
-    """Get video and its details from the YouTube API"""
-    api = API('video_detail', video_id)
-    res_json = api.data
-    thumbnail = res_json['items'][0]['snippet']['thumbnails']['high']['url']
-    thumbnail_format = thumbnail.split('.')[-1]
-    thumbnail_path = os.path.join(
-        BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
-    Thumbnail(thumbnail, thumbnail_path).download()
-    sleep_with_delay(1)
-    return {
-        'id': video_id,
-        'title': res_json['items'][0]['snippet']['title'],
-        'url': 'https://www.youtube.com/watch?v=' + video_id,
-        'description': res_json['items'][0]['snippet']['description'],
-        'thumb': res_json['items'][0]['snippet']['thumbnails']['high']['url'],
-        'published_date': res_json['items'][0]['snippet']['publishedAt'],
-        'duration': parse_duration(res_json['items'][0]['contentDetails']['duration']),
-        'number': 0
-    }
-
-
-def get_video_duration(video_id: str) -> Optional[dict]:
-    """Get the video duration from the video id"""
-    # Create a video duration dictionary
-    video_duration = {}
-    # Get the video url from the video id
-    api = API('details', video_id)
-    # read page info
-    pagedata = api.data
-    # check if there are any results, if not, abort
-    if len(pagedata['items']) == 0:
-        return None
-    # get the video duration
-    video_duration['duration'] = pagedata['items'][0]['contentDetails']['duration']
-    return video_duration
-
-
-def get_episode_yt(video_id: str) -> dict:
-    """Get the details of the episode from the Youtube API via video id"""
-    # Get the video url from the video id
-    api = API('video_detail', video_id)
-    # read page info
-    res = api.data
-    # check if there are any results, if not, abort
-    if len(res['items']) == 0:
-        return {}
-    # Check if video is an episode
-    if not is_episode(
-        res['items'][0]['snippet']['title'],
-        parse_duration(res['items'][0]['contentDetails']['duration'])
-    ):
-        return {}
-    # Create a video detail dictionary
-    episode = {
-        'id': video_id,
-        'title': res['items'][0]['snippet']['title'],
-        'url': 'https://www.youtube.com/watch?v=' + video_id,
-        'description': res['items'][0]['snippet']['description'],
-        'thumb': res['items'][0]['snippet']['thumbnails']['high']['url'],
-        'published_date': res['items'][0]['snippet']['publishedAt'],
-        'duration': parse_duration(res['items'][0]['contentDetails']['duration']),
-        'number': get_episode_number(res['items'][0]['snippet']['title'])
-    }
-    # Return the video detail
-    return episode
-
-
 def get_channel_details(channel_id: str) -> dict:
-    """Query the YouTube API for the channel details"""
-    api = API('channel')
-    res_json = api.data
+    """Query the YouTube API for the channel details."""
+    yt = get_client()
+    request = yt.youtube.channels().list(part='snippet', id=channel_id)
+    response = yt.execute_with_quota(request, cost=YouTubeClient.COST_READ)
+    snippet = response['items'][0]['snippet']
     return {
         'id': channel_id,
-        'title': res_json['items'][0]['snippet']['title'],
+        'title': snippet['title'],
         'url': 'https://www.youtube.com/channel/' + channel_id,
         'last_updated': datetime.now().timestamp()
+    }
+
+
+def _playlist_item_meta(item: dict) -> Optional[dict]:
+    """Extract video metadata from a playlistItems response item.
+
+    Returns None for private/deleted entries or entries missing a publish date.
+    """
+    snippet = item.get('snippet', {})
+    video_id = item.get('contentDetails', {}).get('videoId')
+    title = snippet.get('title', '')
+    published_at = snippet.get('publishedAt')
+    if not video_id or not published_at or title in ('Private video', 'Deleted video'):
+        return None
+    return {'video_id': video_id, 'title': title, 'published_at': published_at}
+
+
+def _detail_to_episode(detail: dict) -> Optional[dict]:
+    """Convert a videos().list() detail item into an episode dict, or None."""
+    snippet = detail.get('snippet', {})
+    video_id = detail.get('id')
+    title = snippet.get('title', '')
+    duration = parse_duration(detail.get(
+        'contentDetails', {}).get('duration', 'PT0S'))
+    if not is_episode(title, duration):
+        return None
+    return {
+        'id': video_id,
+        'title': title,
+        'url': f'https://www.youtube.com/watch?v={video_id}',
+        'description': snippet.get('description', ''),
+        'thumb': snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
+        'published_date': snippet.get('publishedAt', ''),
+        'duration': duration,
+        'number': get_episode_number(title),
+    }
+
+
+def _download_thumbnail(episode: dict) -> None:
+    """Download the thumbnail for an episode if it is not already cached."""
+    thumb_url = episode.get('thumb')
+    if not thumb_url:
+        return
+    thumbnail_format = thumb_url.split('.')[-1]
+    thumbnail_path = os.path.join(
+        BASE_DIR, 'static', 'thumbs', episode['id'] + '.' + thumbnail_format)
+    if not os.path.exists(thumbnail_path):
+        Thumbnail(thumb_url, thumbnail_path).download()
+
+
+def fetch_video(video_id: str) -> dict:
+    """Fetch full metadata for a single video and download its thumbnail."""
+    yt = get_client()
+    detail = yt.get_videos_details(
+        [video_id], part='snippet,contentDetails').get(video_id)
+    if not detail:
+        return {}
+    episode = _detail_to_episode(detail)
+    if episode:
+        _download_thumbnail(episode)
+        return episode
+    snippet = detail.get('snippet', {})
+    return {
+        'id': video_id,
+        'title': snippet.get('title', ''),
+        'url': f'https://www.youtube.com/watch?v={video_id}',
+        'description': snippet.get('description', ''),
+        'thumb': snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
+        'published_date': snippet.get('publishedAt', ''),
+        'duration': parse_duration(detail.get('contentDetails', {}).get('duration', 'PT0S')),
+        'number': 0,
     }
 
 
@@ -186,27 +166,10 @@ def get_now_str() -> str:
 def check_and_store_channel_details(channels_obj, channel_id):
     """Ensure channel row exists in DB; yield a message if we insert."""
     channel_details = channels_obj.read()
-    if channel_details['id'] is None:
+    if not channel_details:
         channel_details = get_channel_details(channel_id)
         channels_obj.insert(channel_details)
         yield 'Channel details saved to database'
-
-
-def get_video_ids(channel_obj, force_flag: bool):
-    """Yield progress messages and return the list of video ids.
-
-    Uses `yield` for messages and returns the video_ids via StopIteration value.
-    """
-    if channel_obj.check_channel_update_db() == False or force_flag == True:
-        yield 'Getting videos from YouTube API'
-        video_ids = get_youtube_video_ids()
-        channel_obj.set_last_updated(datetime.now().timestamp())
-        channel_obj.update_channel_db()
-        yield 'Videos saved to database'
-        return video_ids
-    else:
-        v = Videos()
-        return v.read_ids()
 
 
 def process_existing_video(video_row):
@@ -214,9 +177,10 @@ def process_existing_video(video_row):
     v = Videos()
     # video_row is the DB row tuple
     if video_row[1] is None:
-        video = get_youtube_video(video_row[0])
-        v.update(video)
-        yield 'Video details updated in database'
+        video = fetch_video(video_row[0])
+        if video:
+            v.update(video)
+            yield 'Video details updated in database'
     elif video_row[7] == '0' and is_episode(video_row[1], video_row[6]):
         number = get_episode_number(video_row[1])
         v.update_number(video_row[0], number)
@@ -237,51 +201,69 @@ def process_existing_video(video_row):
         yield msg
 
 
-def process_new_video(video_id):
-    """Handle a video id that's not in DB yet: fetch, maybe insert, and yield messages."""
-    v = Videos()
-    video = get_youtube_video(video_id)
-    yield f"New video: {video['title']}"
-    video_detail = get_episode_yt(video_id)
-    if video_detail != {}:
-        # only insert if not present (protect against races)
-        if v.read(video_detail['id']) is None:
-            v.insert(video_detail)
-            yield 'Video details saved to database'
-        msg = handle_episode_detail(video_detail)
-        if msg:
-            yield msg
-
-
 def update_db(force: bool = False):
     """
     Initialise the database and create the tables if needed.
     Check the channel details for updates.
-    Get the video ids from the channel id.
-    Get the episode details from the video ids.
-    Update the database with the episode details if needed.
+    Get the new video items from the channel uploads playlist.
+    Batch fetch the episode details and update the database.
     """
     # Make this function a generator yielding progress messages so callers can
     # stream updates to clients.
-    msg = '[' + get_now_str() + '] Update started'
-    yield msg
-    # Helper subgenerators to keep code small and testable
+    yield '[' + get_now_str() + '] Update started'
 
-    # perform work using the helpers
+    # Ensure the channel row exists
     channels = Channels()
-    yield from check_and_store_channel_details(channels, 'UCYCGsNTvYxfkPkfQopRMP7w')
+    yield from check_and_store_channel_details(channels, CHANNEL_ID)
 
-    channel = Channel('UCYCGsNTvYxfkPkfQopRMP7w')
-    # get video ids (subgenerator returns list)
-    video_ids = yield from get_video_ids(channel, force)
+    channel = Channel(CHANNEL_ID)
+    v = Videos()
+    known_ids = set(v.read_ids())
 
-    for video_id in video_ids:
-        v = Videos()
+    if force or not channel.check_channel_update_db():
+        yield 'Getting videos from YouTube API'
+        yt = get_client()
+        # Incremental: stop at the first already-known video (playlistItems are
+        # newest first). Full (force): enumerate the entire uploads playlist.
+        items = yt.get_channel_video_items(
+            CHANNEL_ID, stop_at_known_ids=None if force else known_ids)
+
+        new_metas = []
+        for item in items:
+            meta = _playlist_item_meta(item)
+            if meta and meta['video_id'] not in known_ids:
+                new_metas.append(meta)
+        yield f'Found {len(new_metas)} new video(s)'
+
+        # Batch fetch details for all new videos (50 ids per API call)
+        new_ids = [m['video_id'] for m in new_metas]
+        details = yt.get_videos_details(new_ids, part='snippet,contentDetails')
+
+        for meta in new_metas:
+            detail = details.get(meta['video_id'])
+            episode = _detail_to_episode(detail) if detail else None
+            if episode is None:
+                yield f"Not an episode: {meta['title']}"
+                continue
+            if v.read(episode['id']) is None:
+                _download_thumbnail(episode)
+                v.insert(episode)
+                yield 'Video details saved to database: ' + episode['title']
+            msg = handle_episode_detail(episode)
+            if msg:
+                yield msg
+
+        channel.set_last_updated(datetime.now().timestamp())
+        channel.update_channel_db()
+        yield 'Channel updated in database'
+    else:
+        yield 'Channel was updated within the last 24 hours, using local data'
+
+    # Re-verify existing rows locally (fill NULL titles, re-derive numbers)
+    for video_id in v.read_ids():
         row = v.read(video_id)
         if row:
             yield from process_existing_video(row)
-        else:
-            yield from process_new_video(video_id)
 
     yield '[' + get_now_str() + '] Update finished'
 

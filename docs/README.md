@@ -29,13 +29,14 @@ tysoepisodeguide/
 │   ├── guestlist.py        # Guestlist — builds the full guest list from all episodes
 │   ├── thumbnail.py        # Thumbnail — download and resize YouTube thumbnails
 │   ├── video.py            # Video model — raw YouTube video data representation
-│   └── youtubeapi.py       # YouTubeAPI — wrapper around googleapiclient with HTTP fallback
+│   └── youtubeapi.py       # YouTubeAPI — legacy wrapper (superseded by utils/youtube.py)
 ├── utils/                  # Utility modules
 │   ├── __init__.py         # Empty
-│   ├── api.py              # API — low-level YouTube API URL builder and HTTP caller
+│   ├── api.py              # API — legacy HTTP caller (superseded by youtube.py)
 │   ├── images.py           # Images — image file listing and base64 encoding
 │   ├── parsing.py          # Parsing — duration parsing, episode detection, number extraction
-│   └── timing.py           # Timing — sleep/delay helper
+│   ├── timing.py           # Timing — legacy sleep/delay helper
+│   └── youtube.py          # YouTubeClient — quota-aware YouTube Data API client
 ├── db/                     # SQLite database directory (created at runtime)
 │   └── tysodb.db           # The SQLite database file
 ├── static/                 # Static assets served by Flask

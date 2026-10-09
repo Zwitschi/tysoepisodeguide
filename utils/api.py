@@ -16,7 +16,7 @@ class API:
         """Make an API call to the YouTube API"""
         res = requests.get(self.url)
         if res.status_code != 200:
-            print('Error: ' + str(res.status_code) + ' - ' + res.content.decode('utf-8'))
+            print('Error: ' + str(res.status_code))
             return
         return res.json()
 

@@ -41,6 +41,7 @@ class EpisodeGuests:
             'Rick Glassman Deciphers Cosmic Wonders (w/ Mathematician)': 'Ashley Christine',
             'Santa Claus 3.0 | Adam Ray': 'Adam Ray',
             'Santa Claus 2.0 | Adam Ray': 'Adam Ray',
+            'Sona Movsesian 5.0 (Conan O’Brien Needs a Friend)': 'Sona Movsesian',
             'Sona Movsesian 6.0 [RICK* NEEDS A FRIEND]': 'Sona Movsesian',
         }
         for keyword, replacement in title_mappings.items():
