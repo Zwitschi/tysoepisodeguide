@@ -16,7 +16,7 @@ The application follows a **three-layer architecture**:
 ├──────────────────────────────────────────────────────┤
 │                 Data Access Layer                    │
 │     Database (database.py) — SQLite CRUD             │
-│     YouTube API (api.py, youtubeapi.py) — API calls  │
+│     YouTube API (utils/youtube.py) — API calls       │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -57,16 +57,17 @@ update_db(force=False)
     ├── check_and_store_channel_details()
     │   └── Ensures channel metadata exists in DB
     │
-    ├── get_video_ids(channel, force)
-    │   └── get_youtube_video_ids()
-    │       └── Calls YouTube Search API, paginates through results
+    ├── get_channel_video_items()  (utils/youtube.py)
+    │   └── Paginates the uploads playlist (playlistItems, 1 unit/50 items)
+    │       · incremental (default): stops at the first known video ID
+    │       · full (force=True): enumerates the entire playlist
     │
-    └── For each video_id:
-        ├── process_existing_video(row)
-        │   └── Update DB if details changed, fill episode numbers
-        └── process_new_video(video_id)
-            ├── get_youtube_video() — fetch basic metadata
-            └── get_episode_yt() — fetch details, check if it's an episode
+    ├── get_videos_details()  (batch of 50 IDs per videos.list call)
+    │
+    └── For each new video:
+        ├── _detail_to_episode() — apply is_episode() + get_episode_number()
+        ├── _download_thumbnail() — only for newly inserted episodes
+        └── process_existing_video(row) — re-verify local rows
 ```
 
 **Generator pattern**: `update_db()` is a Python generator that `yield`s progress messages. This allows both synchronous callers (`update_db_collect()` → returns a string) and asynchronous SSE consumers (via the background thread) to use the same function.
@@ -76,10 +77,11 @@ update_db(force=False)
 | Function                          | Description                                                           |
 | --------------------------------- | --------------------------------------------------------------------- |
 | `load_content(content)`           | Loads Markdown files and converts them to HTML                        |
-| `get_youtube_video_ids()`         | Fetches all video IDs from the channel via paginated API calls        |
-| `get_youtube_video(video_id)`     | Downloads thumbnail for a single video, returns basic metadata        |
-| `get_episode_yt(video_id)`        | Fetches full episode details if the video is identified as an episode |
 | `get_channel_details(channel_id)` | Fetches YouTube channel metadata                                      |
+| `_playlist_item_meta(item)`       | Extracts video ID/title/publish date from a playlistItems item        |
+| `_detail_to_episode(detail)`      | Builds an episode dict if a video passes `is_episode()`               |
+| `_download_thumbnail(episode)`    | Downloads a thumbnail only when it is not already cached              |
+| `fetch_video(video_id)`           | Fetches full metadata for a single video (fills NULL-title rows)      |
 | `handle_episode_detail(episode)`  | Compares episode data with DB and updates if changed                  |
 | `check_thumbnails()`              | Ensures all thumbnails are downloaded and resized                     |
 | `update_db(force)`                | Main update orchestrator (generator)                                  |
@@ -193,23 +195,23 @@ Handles downloading and resizing YouTube video thumbnails.
 - `download()` — fetches the thumbnail from the URL and saves it locally, then resizes
 - `resize()` — resizes the image to 400px width while maintaining aspect ratio (uses Pillow)
 
-#### `YouTubeAPI` (`youtubeapi.py`)
+#### `YouTubeClient` (`utils/youtube.py`)
 
-A wrapper around the Google API Python client with an HTTP fallback.
+A quota-aware wrapper around the Google API Python client (ported from the
+`youtube-notify` project).
 
-- Tries to use `googleapiclient.discovery.build()` if available
-- Falls back to direct HTTP requests via `requests.get()` if the library is not installed
-- Provides methods: `get_channel_id()`, `get_channel_videos()`, `get_channel_details()`, `get_video_details()`, `get_video_duration()`
+- Uses `googleapiclient.discovery.build()` with the `API_KEY` environment variable
+- `TokenBucket` rate limiter (10,000 units/day) wraps every API call
+- `get_channel_video_items()` — paginates the uploads playlist (`playlistItems`, 1 unit/50 items), optionally stopping at known video IDs
+- `get_videos_details()` — batch fetches details in groups of 50 IDs
 
 ### 4. Utility Modules (`utils/`)
 
-#### `API` (`api.py`)
+#### `YouTubeClient` (`youtube.py`)
 
-A lower-level HTTP API client that builds YouTube API URLs and makes requests.
-
-- Constructs URLs for different task types: `videos`, `channel`, `video_detail`, `details`, `video`, `videos_next`
-- Uses the API key from the `API_KEY` environment variable
-- Returns parsed JSON responses
+See the `YouTubeClient` description above — this module is the single entry
+point for all YouTube API access. The older raw-HTTP `API` class in
+`utils/api.py` has been superseded and is no longer used by the update flow.
 
 #### `Parsing` (`parsing.py`)
 
@@ -221,7 +223,7 @@ Pure functions for parsing YouTube data:
 
 #### `Timing` (`timing.py`)
 
-- `sleep_with_delay(seconds)` — simple wrapper around `time.sleep()` to add delays between API calls (respecting rate limits)
+- `sleep_with_delay(seconds)` — legacy sleep helper; superseded by the token-bucket rate limiter in `utils/youtube.py` and no longer used by the update flow
 
 #### `Images` (`images.py`)
 
@@ -257,20 +259,19 @@ setup.py update_db(force=False)
     │   ├── Read channel from DB
     │   └── If not found: fetch from YouTube API → insert into DB
     │
-    ├── get_video_ids(channel, force)
+    ├── [Fetch from API?]
     │   ├── Check 24-hour cache (skip API if recently updated, unless force=True)
-    │   ├── get_youtube_video_ids() — paginated API call
-    │   └── Return list of video IDs
+    │   ├── get_channel_video_items() — paginate uploads playlist
+    │   │   ├── incremental (default): stop at first known video ID
+    │   │   └── full (force=True): enumerate the entire playlist
+    │   └── get_videos_details() — batch fetch details (50 IDs/call)
     │
-    └── For each video_id:
-        ├── [Already in DB?]
-        │   ├── Yes → process_existing_video(row)
-        │   │   ├── Update metadata if changed
-        │   │   └── Fill episode number if missing
-        │   └── No → process_new_video(video_id)
-        │       ├── get_youtube_video() — download thumbnail
-        │       ├── get_episode_yt() — fetch details, check if episode
-        │       └── If episode: insert into DB
+    └── For each new video:
+        ├── _detail_to_episode() — is_episode() + get_episode_number()
+        ├── If episode:
+        │   ├── _download_thumbnail() (only if not cached)
+        │   └── Insert into DB
+        ├── Then re-verify local rows via process_existing_video()
         │
         └── yield "[timestamp] Update finished"
 ```
@@ -298,7 +299,7 @@ Example: /episode/abc123
 | **Generator**       | `setup.py` — `update_db()`                                       | Yields progress messages; consumed both synchronously and via SSE |
 | **Singleton**       | `app.py` — global `_update_running`                              | Ensures only one DB update runs at a time                         |
 | **Template Method** | `database.py` — `Database` base + `Channels`/`Videos` subclasses | Shared DB setup, specialized CRUD per table                       |
-| **Strategy**        | `youtubeapi.py` — fallback logic                                 | Tries google client first, falls back to HTTP                     |
+| **Strategy**        | `utils/youtube.py` — rate limiting                               | Token-bucket throttles API calls to the daily quota               |
 | **Pipeline**        | `episodeguests.py` — `clean_title()`                             | Multi-step title cleaning pipeline                                |
 | **Data Mapper**     | `database.py` — `Videos`/`Channels`                              | Maps database rows to Python dicts                                |
 
@@ -307,7 +308,7 @@ Example: /episode/abc123
 ## Configuration
 
 - **API Key**: Set the `API_KEY` environment variable (or in a `.env` file) with a YouTube Data API v3 key.
-- **Channel ID**: Hardcoded as `UCYCGsNTvYxfkPkfQopRMP7w` (Rick Glassman's channel) in `setup.py`, `utils/api.py`, and `classes/database.py`.
+- **Channel ID**: Hardcoded as `CHANNEL_ID = 'UCYCGsNTvYxfkPkfQopRMP7w'` (Rick Glassman's channel) in `setup.py`.
 - **Database path**: `db/tysodb.db` relative to the project root.
 - **Thumbnail size**: Resized to 400px width (defined in `classes/thumbnail.py`).
 
