@@ -14,6 +14,19 @@ class Database:
         Channels().create()
         Videos().create()
 
+    def check_tables(self) -> None:
+        """Check if tables exist in database"""
+        c = self.connection.cursor()
+        c.execute(
+            '''SELECT name FROM sqlite_master WHERE type='table' AND name='channels' ''')
+        channel_table = c.fetchone()
+        c.execute(
+            '''SELECT name FROM sqlite_master WHERE type='table' AND name='videos' ''')
+        video_table = c.fetchone()
+        self.connection.close()
+        if not channel_table or not video_table:
+            self.create_tables()
+
     def create_db(self) -> None:
         """Create database file"""
         c = self.connection.cursor()
@@ -30,6 +43,8 @@ class Database:
     def check_install(self) -> bool:
         """Check if database is installed"""
         if os.path.exists(self.DB_FILE):
+            # check if tables exist
+            self.check_tables()
             return True
         else:
             return False

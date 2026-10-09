@@ -75,12 +75,37 @@ def sort_order(request):
     order = reverse if order == 'DESC' else 'ASC'
     return order
 
+
+def set_view_mode(request):
+    # initialize view mode with empty string
+    view = ''
+    # get view mode from request args if present
+    if 'view' in request.args:
+        view = request.args.get('view', view, type=str)
+    # only allow 'table' or 'thumbs'
+    if view not in ['table', 'thumbs']:
+        view = 'table'
+    return view
+
+
+def set_limit(request):
+    # initialize limit with 0
+    limit = 0
+    # get limit from request args if present
+    if 'limit' in request.args:
+        limit = request.args.get('limit', limit, type=int)
+    return limit
+
 # helper function for database last modified date
 
 
 def db_last_modified():
+    dbpath = os.path.join(os.path.dirname(__file__), 'db')
+    dbfile = os.path.join(dbpath, 'tysodb.db')
+    if not os.path.exists(dbfile):
+        return '1970-01-01'
     # get the last modified date of the database
-    last_modified = os.path.getmtime('db/tysodb.db')
+    last_modified = os.path.getmtime(dbfile)
     # convert the last modified date to a datetime object
     last_modified = datetime.fromtimestamp(last_modified)
     return last_modified.strftime('%Y-%m-%d')
@@ -132,14 +157,18 @@ DB_LAST_MODIFIED = db_last_modified()
 @sitemapper.include(lastmod=DB_LAST_MODIFIED, changefreq='weekly', priority=0.8)
 @app.route('/')
 def index():
+    display = set_view_mode(request)
     order = sort_order(request)
+    limit = set_limit(request)
     # get episodes from database
     episodes = get_videos(order)
     # render the template
     return render_template(
         'index.html',
         episodes=episodes,
-        order=order
+        order=order,
+        display=display,
+        limit=limit
     )
 
 
