@@ -9,6 +9,7 @@ from datetime import datetime
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
 
+
 class Channel:
     def __init__(self, channel_id, title=None, url=None, last_updated=None):
         self.channel_id = channel_id
@@ -17,8 +18,8 @@ class Channel:
         self.last_updated = last_updated
 
     def __str__(self):
-        return self.title + ' ' + self.url + ' ' + self.last_updated
-    
+        return f"{self.title} {self.url} {self.last_updated}"
+
     def to_dict(self):
         return {
             'channel_id': self.channel_id,
@@ -26,7 +27,7 @@ class Channel:
             'url': self.url,
             'last_updated': self.last_updated
         }
-    
+
     def set_last_updated(self, last_updated):
         self.last_updated = last_updated
 
@@ -36,7 +37,7 @@ class Channel:
 
         Args:
             channel_id (str): channel id
-            
+
         Returns:
             list: channel details
         """
@@ -72,14 +73,14 @@ class Channel:
                 return True
             else:
                 return False
-                
+
     def update_channel_db(self):
         """
         Update the channel in the database
         """
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-        c.execute('UPDATE channels SET last_updated = ? WHERE id = ?', (self.last_updated, self.channel_id))
+        c.execute('UPDATE channels SET last_updated = ? WHERE id = ?',
+                  (self.last_updated, self.channel_id))
         conn.commit()
         conn.close()
-    
