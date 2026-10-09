@@ -1,21 +1,24 @@
-{% extends "_base.html" %}
-{% block title %}Episode Guide{% endblock %}
-{% block head %}{{ super() }}
-<meta name="description" content="Episode Guide for the Take Your Shoes Off with Rick Glassman">
+{% extends "_base.html" %} {% block title %}Episode Guide{% endblock %} {% block
+head %}{{ super() }}
+<meta
+  name="description"
+  content="Episode Guide for the Take Your Shoes Off with Rick Glassman"
+/>
 <meta property="og:title" content="Take Your Shoes Off with Rick Glassman" />
-<meta property="og:description" content="Take Your Shoes Off with Rick Glassman" />
-<meta name="twitter:description" content="Take Your Shoes Off with Rick Glassman" />
+<meta
+  property="og:description"
+  content="Take Your Shoes Off with Rick Glassman"
+/>
+<meta
+  name="twitter:description"
+  content="Take Your Shoes Off with Rick Glassman"
+/>
 <meta name="twitter:title" content="Take Your Shoes Off with Rick Glassman" />
-{% endblock %}
-{% block content %}
-    <div class="row justify-content-center">
-        <div class="col-12" id="about-page">
-        {% if about %}
-        {{ about | safe }}
-        {% endif %}
-        {% if content %}
-        {{ content | safe }}
-        {% endif %}
-        </div>
-    </div>
+{% endblock %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-12" id="about-page">
+    {% if about %} {{ about | safe }} {% endif %} {% if content %} {{ content |
+    safe }} {% endif %}
+  </div>
+</div>
 {% endblock %}

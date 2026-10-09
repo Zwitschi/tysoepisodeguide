@@ -19,6 +19,7 @@ The episode guide markdown file is used to generate the episode guide HTML file,
   - Flask
   - request
   - markdown
+  - pillow
   - gunicorn
 
 ## Prerequisites

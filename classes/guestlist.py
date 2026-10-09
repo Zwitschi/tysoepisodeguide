@@ -2,24 +2,27 @@ from classes.database import Videos
 from classes.episode import Episode
 from classes.guest import Guest
 
+
 class Guestlist:
     def __init__(self, order) -> None:
         self.order = order
         self.guests = self.guest_list()
-    
-    def guest_list(order: str = 'ASC') -> list:
+
+    def guest_list(self, order: str = None) -> list:
         """Create the list of guests for the guests page"""
+        if order is None:
+            order = self.order
         # create a list of episodes
         episodes = []
 
         # get all videos from db
         v = Videos()
         videos = v.read_videos()
-        
+
         # add episodes to list
         for e in videos:
             episodes.append(Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6]))
-        
+
         # create a list of unique guest names
         guest_names = []
 

@@ -1,17 +1,49 @@
+from flask_sitemapper import Sitemapper
 from datetime import datetime
 import json
 import os
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, Response
 from classes.database import Videos
 from classes.episode import Episode
 from classes.guestlist import Guestlist
-from setup import update_db, load_content
+from setup import update_db, update_db_collect, load_content
+import threading
+import time
+
+# Singleton update runner state
+# _update_lock: protects starting/stopping the update
+_update_lock = threading.Lock()
+# _update_running: True when an update is in progress
+_update_running = False
+# _update_messages: list of strings produced so far
+_update_messages = []
+# _update_condition: notify waiting stream clients of new messages
+_update_condition = threading.Condition()
+
+
+def _run_update_in_background(force=False):
+    """Run update_db generator in a background thread and populate the shared message list."""
+    global _update_running, _update_messages
+    try:
+        for msg in update_db(force=force):
+            with _update_condition:
+                _update_messages.append(msg)
+                _update_condition.notify_all()
+        # final message(s) appended by generator
+    except Exception as e:
+        with _update_condition:
+            _update_messages.append(f"[error] {e}")
+            _update_condition.notify_all()
+    finally:
+        with _update_condition:
+            _update_running = False
+            _update_condition.notify_all()
 
 # add gzip compression
 # from flask_compress import Compress
 
+
 # add site map
-from flask_sitemapper import Sitemapper
 
 # init Flask app
 app = Flask(__name__, static_url_path='',
@@ -163,14 +195,48 @@ def license():
 
 @app.route('/update')
 def update():
-    ret_str = update_db()
-    update = '<h1>Update complete</h1>'
-    for line in ret_str.split('\n'):
-        update += '<pre>' + line + '</pre>\n'
-    return render_template(
-        'about.html',
-        content=update
-    )
+    # Render the update page; the page's JS will connect to /update/stream to receive live updates
+    return render_template('update.html')
+
+
+@app.route('/update/stream')
+def update_stream():
+    # Stream Server-Sent Events (SSE) from a singleton background update runner.
+    global _update_running
+
+    # Start the update in background if not running
+    with _update_lock:
+        if not _update_running:
+            _update_running = True
+            _update_messages.clear()
+            thread = threading.Thread(target=_run_update_in_background, kwargs={
+                                      'force': False}, daemon=True)
+            thread.start()
+
+    def event_stream():
+        # First, send all cached messages so far
+        last_index = 0
+        with _update_condition:
+            # send existing messages
+            while last_index < len(_update_messages):
+                msg = _update_messages[last_index]
+                last_index += 1
+                yield f"data: {msg}\n\n"
+
+            # then wait for new messages and stream them as they arrive
+            while True:
+                # wait for a notification
+                _update_condition.wait()
+                # stream any new messages
+                while last_index < len(_update_messages):
+                    msg = _update_messages[last_index]
+                    last_index += 1
+                    yield f"data: {msg}\n\n"
+                # if no update running and no new messages, close the stream
+                if not _update_running:
+                    break
+
+    return Response(event_stream(), mimetype='text/event-stream')
 
 
 @sitemapper.include(lastmod=DB_LAST_MODIFIED)

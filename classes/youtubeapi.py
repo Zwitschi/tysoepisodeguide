@@ -4,15 +4,30 @@ YouTube API class
 import os
 import requests
 from datetime import datetime
+try:
+    from googleapiclient.discovery import build as _google_build
+except Exception:
+    _google_build = None
 
 API_URL = 'https://www.googleapis.com/youtube/v3/'
 # load API_KEY from .env
 API_KEY = os.getenv('API_KEY')
 
+
 class YouTubeAPI:
     def __init__(self, api_key=API_KEY):
         self.api_key = api_key
-        self.youtube = build('youtube', 'v3', developerKey=api_key)
+        # if googleapiclient is available use it to build a client, otherwise
+        # fall back to the local build() helper which returns a url string
+        if _google_build:
+            try:
+                self.youtube = _google_build(
+                    'youtube', 'v3', developerKey=api_key)
+            except Exception:
+                self.youtube = None
+        else:
+            # keep None to signal that we should use HTTP fallback
+            self.youtube = None
 
     def get_channel_id(self, channel_name):
         request = self.youtube.channels().list(
@@ -32,19 +47,29 @@ class YouTubeAPI:
         )
         response = request.execute()
         return response['items']
-    
-    def get_channel_details(channel_id):
+
+    def get_channel_details(self, channel_id):
         """
         Query the YouTube API for the channel details
 
         Args:
             channel_id: string, the id of the channel
-            
+
         Returns:
             dict: the channel details
         """
-        channel_url = API_URL + 'channels?part=snippet,contentDetails&id=' + channel_id + '&key=' + API_KEY
-        res_json = api_call(channel_url)
+        # prefer using the google client if available, otherwise fall back to HTTP call
+        try:
+            request = self.youtube.channels().list(
+                part='snippet,contentDetails',
+                id=channel_id
+            )
+            response = request.execute()
+            res_json = response
+        except Exception:
+            channel_url = API_URL + 'channels?part=snippet,contentDetails&id=' + \
+                channel_id + '&key=' + self.api_key
+            res_json = api_call(channel_url)
         channel = {
             'id': channel_id,
             'title': res_json['items'][0]['snippet']['title'],
@@ -69,6 +94,7 @@ class YouTubeAPI:
         response = request.execute()
         return response['items'][0]['contentDetails']['duration']
 
+
 def build(url, version, developerKey):
     """
     Build API url
@@ -77,13 +103,14 @@ def build(url, version, developerKey):
         url: string, the base url
         version: string, the API version
         developerKey: string, the API key
-        
+
     Returns:
         string: the API url
     """
-    if url=='youtube':
+    if url == 'youtube':
         url = 'https://www.googleapis.com/youtube'
     return url + '/' + version + '?key=' + developerKey
+
 
 def api_call(url):
     """
@@ -97,7 +124,8 @@ def api_call(url):
     """
     response = requests.get(url)
     if response.status_code != 200:
-        print('Error: ' + str(response.status_code) + ' - ' + response.content.decode('utf-8'))
+        print('Error: ' + str(response.status_code) +
+              ' - ' + response.content.decode('utf-8'))
         return
     res_json = response.json()
     return res_json

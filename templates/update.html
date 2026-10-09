@@ -1,0 +1,84 @@
+{% extends "_base.html" %} {% block title %}Episode Guide - Update{% endblock %}
+{% block head %}{{ super() }}
+<meta
+  name="description"
+  content="Episode Guide for the Take Your Shoes Off with Rick Glassman"
+/>
+{% endblock %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-12" id="update-page">
+    <h1>Update</h1>
+
+    <div id="controls" style="margin-bottom: 1rem">
+      <button id="startBtn">Start</button>
+      <button id="stopBtn" disabled>Stop</button>
+    </div>
+
+    <div
+      id="output"
+      style="
+        white-space: pre-wrap;
+        background: #111;
+        color: #eee;
+        padding: 1rem;
+        border-radius: 6px;
+        height: 60vh;
+        overflow: auto;
+      "
+    ></div>
+  </div>
+</div>
+
+<script>
+  // Exposed state
+  let es = null;
+
+  function appendMessage(msg) {
+    const out = document.getElementById("output");
+    out.textContent += msg + "\n";
+    out.scrollTop = out.scrollHeight;
+  }
+
+  function startUpdate() {
+    if (es) return;
+    es = new EventSource("/update/stream");
+    document.getElementById("startBtn").disabled = true;
+    document.getElementById("stopBtn").disabled = false;
+
+    es.onmessage = function (e) {
+      appendMessage(e.data);
+    };
+
+    es.onerror = function (e) {
+      appendMessage("[error] Connection lost or finished.");
+      es.close();
+      es = null;
+      document.getElementById("startBtn").disabled = false;
+      document.getElementById("stopBtn").disabled = true;
+    };
+  }
+
+  function stopUpdate() {
+    if (!es) return;
+    es.close();
+    es = null;
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("stopBtn").disabled = true;
+  }
+
+  // Hook buttons
+  document.getElementById("startBtn").addEventListener("click", startUpdate);
+  document.getElementById("stopBtn").addEventListener("click", stopUpdate);
+
+  // Expose functions for other scripts
+  window.startUpdate = startUpdate;
+  window.stopUpdate = stopUpdate;
+  window.appendMessage = appendMessage;
+
+  // Auto-start when page loads
+  window.addEventListener("load", () => {
+    startUpdate();
+  });
+</script>
+
+{% endblock %}
