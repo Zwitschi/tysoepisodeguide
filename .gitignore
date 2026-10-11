@@ -7,3 +7,4 @@ __pycache__
 pyvenv.cfg
 cleanup.ps1
 .github/instructions/
+TODO.md

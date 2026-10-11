@@ -4,7 +4,7 @@
 
 The application follows a **three-layer architecture**:
 
-```
+```text
 ┌──────────────────────────────────────────────────────┐
 │                 Presentation Layer                   │
 │     Flask App (app.py) + Jinja2 Templates            │
@@ -19,8 +19,6 @@ The application follows a **three-layer architecture**:
 │     YouTube API (utils/youtube.py) — API calls       │
 └──────────────────────────────────────────────────────┘
 ```
-
----
 
 ## Component Breakdown
 
@@ -39,6 +37,10 @@ The Flask application defines the following routes:
 | `/update`               | `update.html`  | Database update page (triggers SSE stream)                                |
 | `/update/stream`        | —              | SSE endpoint streaming live update progress                               |
 | `/images`               | —              | Returns JSON list of thumbnail file paths                                 |
+| `/api/episodes`         | —              | JSON API — episode list (`?sort=&limit=&offset=`)                         |
+| `/api/episodes/<id>`    | —              | JSON API — single episode by video id                                     |
+| `/api/guests`           | —              | JSON API — guest list with episode counts                                 |
+| `/api/guests/<name>`    | —              | JSON API — single guest with their episodes                               |
 | `/sitemap.xml`          | —              | Auto-generated sitemap via `flask_sitemapper`                             |
 
 **Key Design Patterns in app.py:**
@@ -51,7 +53,7 @@ The Flask application defines the following routes:
 
 This module orchestrates the full data collection pipeline:
 
-```
+```text
 update_db(force=False)
     │
     ├── check_and_store_channel_details()
@@ -65,7 +67,7 @@ update_db(force=False)
     ├── get_videos_details()  (batch of 50 IDs per videos.list call)
     │
     └── For each new video:
-        ├── _detail_to_episode() — apply is_episode() + get_episode_number()
+        ├── _detail_to_video() — apply is_episode() + get_episode_number()
         ├── _download_thumbnail() — only for newly inserted episodes
         └── process_existing_video(row) — re-verify local rows
 ```
@@ -79,7 +81,7 @@ update_db(force=False)
 | `load_content(content)`           | Loads Markdown files and converts them to HTML                        |
 | `get_channel_details(channel_id)` | Fetches YouTube channel metadata                                      |
 | `_playlist_item_meta(item)`       | Extracts video ID/title/publish date from a playlistItems item        |
-| `_detail_to_episode(detail)`      | Builds an episode dict if a video passes `is_episode()`               |
+| `_detail_to_video(detail)`         | Builds a video dict; episodes get a parsed number, others get `0`   |
 | `_download_thumbnail(episode)`    | Downloads a thumbnail only when it is not already cached              |
 | `fetch_video(video_id)`           | Fetches full metadata for a single video (fills NULL-title rows)      |
 | `handle_episode_detail(episode)`  | Compares episode data with DB and updates if changed                  |
@@ -164,7 +166,7 @@ Extracts guest names from episode titles using a multi-step cleaning pipeline:
 1. **`clean_by_mapping()`** — exact keyword-to-replacement mappings for known guests (e.g., `"Are You Garbage"` → `"Kevin James Ryan + Henry Foley"`)
 2. **`sleepover_series()`** — strips "The Sleepover Series:" prefix
 3. **`uncle_bob()`** — normalizes "(feat. Uncle Bob)" format
-4. **`clean_by_split()`** — splits title on `(`, `[`, ` aka`, ` -` and takes the first part
+4. **`clean_by_split()`** — splits title on `(`, `[`, `aka`, `-` and takes the first part
 5. **`clean_by_list_replace()`** — removes known patterns like episode numbers, "UNCENSORED", "on TYSO", "w/ Rick Glassman", etc.
 6. Removes version numbers (1.0, 2.0, etc.)
 7. The cleaned title becomes the guest name(s), split by `+`
@@ -210,8 +212,8 @@ A quota-aware wrapper around the Google API Python client (ported from the
 #### `YouTubeClient` (`youtube.py`)
 
 See the `YouTubeClient` description above — this module is the single entry
-point for all YouTube API access. The older raw-HTTP `API` class in
-`utils/api.py` has been superseded and is no longer used by the update flow.
+point for all YouTube API access. The older raw-HTTP `API` class (formerly in
+`utils/api.py`) has been removed.
 
 #### `Parsing` (`parsing.py`)
 
@@ -244,13 +246,11 @@ The templates use **Jinja2** with template inheritance:
 - **`about.html`** — renders Markdown content as HTML
 - **`update.html`** — triggers and displays SSE stream from `/update/stream`
 
----
-
 ## Data Flow Diagrams
 
 ### Database Update Flow
 
-```
+```text
 setup.py update_db(force=False)
     │
     ├── yield "[timestamp] Update started"
@@ -267,10 +267,11 @@ setup.py update_db(force=False)
     │   └── get_videos_details() — batch fetch details (50 IDs/call)
     │
     └── For each new video:
-        ├── _detail_to_episode() — is_episode() + get_episode_number()
+        ├── _detail_to_video() — is_episode() + get_episode_number()
         ├── If episode:
         │   ├── _download_thumbnail() (only if not cached)
         │   └── Insert into DB
+        ├── If not an episode, still insert into DB (number '0')
         ├── Then re-verify local rows via process_existing_video()
         │
         └── yield "[timestamp] Update finished"
@@ -278,7 +279,7 @@ setup.py update_db(force=False)
 
 ### Request Serving Flow
 
-```
+```text
 Browser Request → Flask Route → Helper Functions → Database Query → Domain Objects → Template Rendering → HTML Response
 
 Example: /episode/abc123

@@ -1,5 +1,6 @@
 from typing import Optional
 import os
+import sqlite3
 import sys
 import markdown
 from datetime import datetime
@@ -77,15 +78,20 @@ def _playlist_item_meta(item: dict) -> Optional[dict]:
     return {'video_id': video_id, 'title': title, 'published_at': published_at}
 
 
-def _detail_to_episode(detail: dict) -> Optional[dict]:
-    """Convert a videos().list() detail item into an episode dict, or None."""
+def _detail_to_video(detail: dict) -> Optional[dict]:
+    """Convert a videos().list() detail item into a video dict.
+
+    Full episodes get their episode number parsed from the title; every other
+    video is stored with number '0' so the database holds all channel videos.
+    """
     snippet = detail.get('snippet', {})
     video_id = detail.get('id')
+    if not video_id:
+        return None
     title = snippet.get('title', '')
     duration = parse_duration(detail.get(
         'contentDetails', {}).get('duration', 'PT0S'))
-    if not is_episode(title, duration):
-        return None
+    number = get_episode_number(title) if is_episode(title, duration) else '0'
     return {
         'id': video_id,
         'title': title,
@@ -94,7 +100,7 @@ def _detail_to_episode(detail: dict) -> Optional[dict]:
         'thumb': snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
         'published_date': snippet.get('publishedAt', ''),
         'duration': duration,
-        'number': get_episode_number(title),
+        'number': number,
     }
 
 
@@ -117,21 +123,12 @@ def fetch_video(video_id: str) -> dict:
         [video_id], part='snippet,contentDetails').get(video_id)
     if not detail:
         return {}
-    episode = _detail_to_episode(detail)
-    if episode:
-        _download_thumbnail(episode)
-        return episode
-    snippet = detail.get('snippet', {})
-    return {
-        'id': video_id,
-        'title': snippet.get('title', ''),
-        'url': f'https://www.youtube.com/watch?v={video_id}',
-        'description': snippet.get('description', ''),
-        'thumb': snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
-        'published_date': snippet.get('publishedAt', ''),
-        'duration': parse_duration(detail.get('contentDetails', {}).get('duration', 'PT0S')),
-        'number': 0,
-    }
+    video = _detail_to_video(detail)
+    if video is None:
+        return {}
+    if video['number'] != '0':
+        _download_thumbnail(video)
+    return video
 
 
 def handle_episode_detail(episode: dict) -> str:
@@ -241,15 +238,17 @@ def update_db(force: bool = False):
 
         for meta in new_metas:
             detail = details.get(meta['video_id'])
-            episode = _detail_to_episode(detail) if detail else None
-            if episode is None:
-                yield f"Not an episode: {meta['title']}"
+            if not detail:
                 continue
-            if v.read(episode['id']) is None:
-                _download_thumbnail(episode)
-                v.insert(episode)
-                yield 'Video details saved to database: ' + episode['title']
-            msg = handle_episode_detail(episode)
+            video = _detail_to_video(detail)
+            if video is None:
+                continue
+            if v.read(video['id']) is None:
+                if video['number'] != '0':
+                    _download_thumbnail(video)
+                v.insert(video)
+                yield 'Video details saved to database: ' + video['title']
+            msg = handle_episode_detail(video)
             if msg:
                 yield msg
 
@@ -279,11 +278,61 @@ def update_db_collect(force: bool = False) -> str:
     return '\n'.join(parts) + '\n'
 
 
+def baseline_report() -> str:
+    """Analyze the local database and return a baseline report.
+
+    Reports the total number of videos, episode-number coverage (gaps in the
+    1..N sequence), fractional episode numbers, and duplicate numbers.
+    """
+    if not os.path.exists(DB_FILE):
+        return 'No database found. Run `python setup.py install` first.\n'
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM videos')
+    total = c.fetchone()[0]
+    c.execute(
+        "SELECT number FROM videos WHERE number NOT IN ('', '0') AND number IS NOT NULL")
+    nums = []
+    for (number,) in c.fetchall():
+        try:
+            nums.append(float(number))
+        except ValueError:
+            continue
+    c.execute(
+        "SELECT number, COUNT(*) FROM videos WHERE number NOT IN ('', '0') GROUP BY number HAVING COUNT(*) > 1")
+    duplicates = c.fetchall()
+    conn.close()
+
+    ints = sorted({int(n) for n in nums if n == int(n)})
+    fracs = sorted({n for n in nums if n != int(n)})
+
+    lines = [
+        f'Total videos in database: {total}',
+        f'Videos with an episode number: {len(nums)}',
+    ]
+    if ints:
+        missing = [n for n in range(1, max(ints) + 1) if n not in ints]
+        lines.append(
+            f'Integer episode numbers: {len(ints)} (range {min(ints)}-{max(ints)})')
+        lines.append('Missing episode numbers: ' +
+                     (', '.join(map(str, missing)) if missing else 'none'))
+    if fracs:
+        lines.append('Fractional episode numbers: ' +
+                     ', '.join(str(n) for n in fracs))
+    if duplicates:
+        lines.append('Duplicate episode numbers: ' +
+                     ', '.join(f'{n} x{count}' for n, count in duplicates))
+    else:
+        lines.append('Duplicate episode numbers: none')
+    return '\n'.join(lines) + '\n'
+
+
 def action_from_arguments(*args) -> tuple[str, bool]:
     """
     Check the command line arguments and execute the appropriate function
 
-    Accepts arguments: install, update, force, thumbnails
+    Accepts arguments: install, update, force, thumbnails, baseline
     Default is 'update'
     """
     action = 'update'
@@ -300,13 +349,15 @@ def action_from_arguments(*args) -> tuple[str, bool]:
             force = True
         elif args[0] == 'thumbnails':
             action = 'thumbnails'
+        elif args[0] == 'baseline':
+            action = 'baseline'
     elif len(args) == 2:
         if args[0] == 'update' and args[1] == 'force':
             action = 'update'
             force = True
     else:
         print(
-            'Usage: python setup.py [install|update [force]|force|thumbnails]')
+            'Usage: python setup.py [install|update [force]|force|thumbnails|baseline]')
         sys.exit(1)
     return action, force
 
@@ -333,9 +384,11 @@ def main(*args):
     elif action == 'thumbnails':
         # check thumbnails
         check_thumbnails()
+    elif action == 'baseline':
+        print(baseline_report(), end='')
     else:
         print(
-            'Usage: python setup.py [install|update [force]|force|thumbnails]')
+            'Usage: python setup.py [install|update [force]|force|thumbnails|baseline]')
         sys.exit(1)
     # exit
     sys.exit(0)

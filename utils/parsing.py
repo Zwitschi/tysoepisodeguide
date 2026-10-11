@@ -58,6 +58,8 @@ def get_episode_number(video_title: str) -> str:
         episode_number = 50
     elif 'BEST OF' in video_title or 'PATREON UNLOCKED' in video_title:
         episode_number = 0
+    elif '#' not in video_title:
+        episode_number = 0
     else:
         # Get the episode number from title, split at '#' character to find the episode number
         episode_number = video_title.split('#')[1]
@@ -67,7 +69,9 @@ def get_episode_number(video_title: str) -> str:
         episode_number = episode_number.replace(' pt ', '.')
         # shorten
         episode_number = episode_number.split(' ')[0]
-        if '.' in episode_number:
+        if not re.fullmatch(r'\d+(\.\d+)?', episode_number):
+            episode_number = 0
+        elif '.' in episode_number:
             # if number contains a '.' then cast as float
             episode_number = float(episode_number)
         else:

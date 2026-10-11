@@ -16,19 +16,63 @@ head %}{{ super() }}
 <meta name="twitter:title" content="Take Your Shoes Off with Rick Glassman" />
 <link rel="canonical" href="https://tysoepisodeguide.azurewebsites.net/" />
 <script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
-{% endblock %} {% block header %} {% if view=='thumbs'%} {% endif %} {% endblock
-%} {% block content %} {% if display=="table" %}
+{% endblock %} {% block content %}
 <div class="row justify-content-center">
   <div class="col-12">
+    <div
+      class="d-flex justify-content-between align-items-center flex-wrap gap-2 my-3"
+    >
+      <div class="d-flex align-items-center flex-wrap gap-2">
+        <label class="mb-0" for="per-page">Episodes per page</label>
+        <select
+          id="per-page"
+          class="form-select form-select-sm w-auto bg-dark text-light"
+          onchange="window.location.href = this.value"
+        >
+          {% for size in [25, 50, 100, 500, 1000] %} {% set selected =
+          "selected" if pagination.per_page == size else "" %}
+          <option
+            value="{{ url_for('index', sort=order, view=display, per_page=size, page=1) }}"
+            {{
+            selected
+            }}
+          >
+            {{ size }}
+          </option>
+          {% endfor %}
+        </select>
+        <span class="mb-0"
+          >Showing {{ pagination.start }}&ndash;{{ pagination.end }} of {{
+          pagination.total }} episodes</span
+        >
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <a
+          class="btn btn-sm btn-outline-light {% if not pagination.has_prev %}disabled{% endif %}"
+          href="{{ url_for('index', sort=order, view=display, per_page=pagination.per_page, page=pagination.page - 1) }}"
+          >Previous</a
+        >
+        <span class="px-2"
+          >Page {{ pagination.page }} / {{ pagination.total_pages }}</span
+        >
+        <a
+          class="btn btn-sm btn-outline-light {% if not pagination.has_next %}disabled{% endif %}"
+          href="{{ url_for('index', sort=order, view=display, per_page=pagination.per_page, page=pagination.page + 1) }}"
+          >Next</a
+        >
+      </div>
+    </div>
+    {% if display=="table" %}
     <table
       id="episode-guide"
       class="table table-dark table-striped table-bordered table-hover"
     >
-      <thead class="thead-dark">
+      <thead class="table-dark">
         <tr>
           <th class="ep-thumb"></th>
           <th>
-            <a href="?sort={% if order == 'ASC' %}DESC{% else %}ASC{% endif %}"
+            <a
+              href="{{ url_for('index', sort='DESC' if order == 'ASC' else 'ASC', view=display, per_page=pagination.per_page, page=1) }}"
               >Episode</a
             >
           </th>
@@ -65,40 +109,30 @@ head %}{{ super() }}
         {% endfor %}
       </tbody>
     </table>
+    {% else %}
+    <!-- Thumbnails view -->
+    <div class="row justify-content-center">
+      {% for e in episodes %}
+      <div class="col-6 text-center">
+        <a
+          id="episode-{{ e.number }}"
+          class="ep-link"
+          href="{{ e.url }}"
+          target="_blank"
+        >
+          <img src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" />
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
   </div>
 </div>
-{% else %}
-<!-- Thumbnails view -->
-<div class="row justify-content-center">
-  {% if limit > 0 %} {% for e in episodes[:limit] %}
-  <div class="col-6 text-center">
-    <a
-      id="episode-{{ e.number }}"
-      class="ep-link"
-      href="{{ e.url }}"
-      target="_blank"
-    >
-      <img src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" />
-    </a>
-  </div>
-  {% endfor %} {% else %} {% for e in episodes %}
-  <div class="col-6 text-center">
-    <a
-      id="episode-{{ e.number }}"
-      class="ep-link"
-      href="{{ e.url }}"
-      target="_blank"
-    >
-      <img src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" />
-    </a>
-  </div>
-  {% endfor %} {% endif %}
-</div>
-{% endif %} {% endblock %} {% block footer %} {% if view=='table'%}
+{% endblock %} {% block footer %} {% if display=="table" %}
 <div id="footer">
-  &copy; 2023 TYSO Episode Guide by
+  &copy; 2026 TYSO Episode Guide by
   <a href="https://zwitschi.net/" target="_blank">Zwitschi</a> for
-  <a href="https://www.rickglassman.com/" target="_blank"
+  <a href="https://rickglassman.com/" target="_blank"
     >Take Your Shoes Off with Rick Glassman</a
   >
 </div>

@@ -188,11 +188,12 @@ class Videos(Database):
         c = connection.cursor()
         sql = '''
         SELECT * FROM videos 
-        WHERE duration > 1600 
+        WHERE duration > 1200 
+        AND (title LIKE "%TYSO%" OR title LIKE "%Take Your Shoes Off%")
         AND title NOT LIKE "%Rick Glassman & Esther Povitsky Have a Time%" 
         AND title NOT LIKE "%Playing some Magic: The Gathering%"
         AND title NOT LIKE "%Magic the Gathering LIVE from Marshall Rug Gallery%"
-        and title NOT LIKE "%Take Your Shoes Off - BEST OF %"
+        AND title NOT LIKE "%Take Your Shoes Off - BEST OF %"
         ORDER BY published_date ''' + order + ''';
         '''
         c.execute(sql)

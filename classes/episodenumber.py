@@ -25,9 +25,8 @@ class EpisodeNumber:
         ]
         if '#' not in self.title and 'Balcony Series' in self.title:
             # try to get the episode number from the title with regex, only consider numbers and . 
-            self.number = re.findall(r'[\d\.]+', self.title)
-            if len(self.number) > 0:
-                self.number = self.number[0]
+            match = re.search(r'[\d\.]+', self.title)
+            self.number = match.group(0) if match else 0
         elif '#' not in self.title and '50th' in self.title:
             self.number = 50
         elif any(x in self.title.lower() for x in exceptions):
@@ -44,10 +43,12 @@ class EpisodeNumber:
             # shorten
             self.number = self.number.split(' ')[0]
             
-        if self.number == 0 or self.number == 50:
+        # Validate and cast the extracted number; fall back to 0 for non-numeric values
+        match = re.fullmatch(r'(\d+)(?:\.(\d+))?', str(self.number))
+        if not match:
+            self.number = 0
             return
-        elif '.' in self.number:
-            # if number contains a '.' then cast as float
-            self.number = float(self.number)
+        if match.group(2) is not None:
+            self.number = float(str(self.number))
         else:
-            self.number = int(self.number)
+            self.number = int(match.group(1))

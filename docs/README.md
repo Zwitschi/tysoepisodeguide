@@ -10,7 +10,7 @@ The live site is available at [https://tysoepisodeguide.azurewebsites.net/](http
 
 ## Project Structure
 
-```
+```text
 tysoepisodeguide/
 ├── app.py                  # Flask web application — routes, views, SSE streaming
 ├── setup.py                # Database setup, YouTube API data fetching, update orchestration
@@ -32,7 +32,6 @@ tysoepisodeguide/
 │   └── youtubeapi.py       # YouTubeAPI — legacy wrapper (superseded by utils/youtube.py)
 ├── utils/                  # Utility modules
 │   ├── __init__.py         # Empty
-│   ├── api.py              # API — legacy HTTP caller (superseded by youtube.py)
 │   ├── images.py           # Images — image file listing and base64 encoding
 │   ├── parsing.py          # Parsing — duration parsing, episode detection, number extraction
 │   ├── timing.py           # Timing — legacy sleep/delay helper

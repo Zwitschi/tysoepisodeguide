@@ -1,286 +1,345 @@
-/* 
- * CSS for Take Your Shoes Off podcast episode guide 
+/*
+ * CSS for Take Your Shoes Off podcast episode guide
 */
 
 /* Global Styles */
 body {
-    background-color: #000;
-    color: #fff;
-    margin: 0;
+  background-color: #111;
+  color: #f0ebe0;
+  margin: 0;
+  font-family: "DM Sans", sans-serif;
 }
 
 .row {
-    margin: 0;
+  margin: 0;
 }
 
-/* Font */
+/* Fonts (self-hosted, sourced from rickglassman.com) */
 @font-face {
-    font-family: 'amboy-black';
-    src: url('amboy-black.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
+  font-family: "Anton";
+  src: url("/fonts/Anton-normal-400-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/fonts/DM_Sans-normal-400-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Dela Gothic One";
+  src: url("/fonts/Dela_Gothic_One-normal-400-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/fonts/Space_Grotesk-normal-500-latin.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 
 /* Headers and Links */
-h1, h2, h3, h4, h5, h6,
-a, #header a.nav-link,
-table#episode-guide th, 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+#header a.nav-link,
+table#episode-guide th,
 table#guests th {
-    color: #ff0;
+  color: #f0ebe0;
 }
 
 a:hover {
-    color: #fff;
+  color: #fff;
 }
 
 /* Font Family */
-a, h1, h2, h3, h4, h5, h6, #header a.nav-link,
-#footer,
-table#episode-guide th, 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+table#episode-guide th,
 table#guests th {
-    font-family: 'amboy-black', sans-serif;
-}
-
-/* Layout */
-#header, #content, #footer {
-    margin: 0 .5em;
-}
-
-#header {
-    color: #fff;
-    padding: 0;
-    margin-bottom: 1em;
-}
-
-#content {
-    padding: auto;
-}
-
-#footer {
-    font-size: 1rem;
-    background-color: #000;
-    height: 1.5rem;
-}
-
-/* Header Styles */
-#header-title, #header-nav {
-    margin: 0;
-    padding: 0;
-}
-
-#header h1 {
-    display: inline-block;
-    word-wrap: break-word;
-    font-weight: bold;
-    font-size: 1.8rem;
-    line-height: 100%;
-}
-
-#header h1 a {
-    text-decoration: none;
-    color: #0060df;
-}
-
-#header-img, #header-img img, #header-nav h1 {
-    vertical-align: bottom;
-    height: 50px;
-    line-height: 50px;
-}
-
-#header-img {
-    display: inline-block;
-    margin-right: 1em;
-}
-
-#header-img img {
-    height: 50px;
+  font-family: "Anton", sans-serif;
 }
 
 #header a.nav-link {
-    font-size: 1.6rem;
-    text-decoration: none;
+  font-family: "Dela Gothic One", sans-serif;
+}
+
+#footer {
+  font-family: "DM Sans", sans-serif;
+}
+
+/* Layout */
+#header,
+#content,
+#footer {
+  margin: 0 0.5em;
+}
+
+#header {
+  color: #f0ebe0;
+  padding: 0;
+  margin-bottom: 1em;
+}
+
+#content {
+  padding: auto;
+}
+
+#footer {
+  font-size: 1rem;
+  background-color: transparent;
+  color: #999;
+  height: 1.5rem;
+}
+
+/* Header Styles */
+#header-title,
+#header-nav {
+  margin: 0;
+  padding: 0;
+}
+
+#header h1 {
+  display: inline-block;
+  word-wrap: break-word;
+  font-weight: bold;
+  font-size: 1.8rem;
+  line-height: 100%;
+}
+
+#header h1 a {
+  text-decoration: none;
+  color: #f0ebe0;
+}
+
+#header-img,
+#header-img img,
+#header-nav h1 {
+  vertical-align: bottom;
+  height: 50px;
+  line-height: 50px;
+}
+
+#header-img {
+  display: inline-block;
+  margin-right: 1em;
+}
+
+#header-img img {
+  height: 50px;
+}
+
+#header a.nav-link {
+  font-size: 1.6rem;
+  text-decoration: none;
 }
 
 #content h1 {
-    font-size: 1.8rem;
+  font-size: 1.8rem;
 }
 
 /* Table Styles */
-table#episode-guide, table#guests {
-    margin-top: .5em;
+table#episode-guide,
+table#guests {
+  margin-top: 0.5em;
 }
 
-table#episode-guide th, table#guests th {
-    font-size: 1.2rem;
+table#episode-guide th,
+table#guests th {
+  font-size: 1.2rem;
 }
 
-tr.ep-row, tr.guest-row {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 1.25rem;
+tr.ep-row,
+tr.guest-row {
+  font-family: "DM Sans", sans-serif;
+  font-size: 1.25rem;
 }
 
-tbody .ep-thumb, tbody .ep-row img {
-    width: 200px;
+tbody .ep-thumb,
+tbody .ep-row img {
+  width: 200px;
 }
 
 .ep-row .ep-guest a {
-    font-family: Arial, Helvetica, sans-serif;
+  font-family: "DM Sans", sans-serif;
 }
 
 td.ep-title {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 td.ep-guest {
-    font-weight: normal;
-    flex-wrap: wrap;
+  font-weight: normal;
+  flex-wrap: wrap;
 }
 
 td.ep-date {
-    text-align: right;
-    font-weight: normal;
+  text-align: right;
+  font-weight: normal;
 }
 
 .ep-link {
-    font-family: Arial, Helvetica, sans-serif;
-    vertical-align: top;
-    text-decoration: none;
-    font-weight: normal;
+  font-family: "DM Sans", sans-serif;
+  vertical-align: top;
+  text-decoration: none;
+  font-weight: normal;
 }
 
 #guest .ep-img {
-    display: inline-block;
-    height: 144px;
+  display: inline-block;
+  height: 144px;
 }
 
 /* Episode Styles */
 .episode .ep-details {
-    margin-top: 0;
-    font-family: 'amboy-black', sans-serif;
+  margin-top: 0;
+  font-family: "Anton", sans-serif;
 }
 
 .episode .ep-link {
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: normal;
-    font-size: 1.2rem;
+  font-family: "DM Sans", sans-serif;
+  font-weight: normal;
+  font-size: 1.2rem;
 }
 
 h2.ep-title {
-    font-weight: bold;
-    width: 100%;
-    z-index: 1;
+  font-weight: bold;
+  width: 100%;
+  z-index: 1;
 }
 
 .episode .ep-title {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .episode .ep-title:hover,
 .episode a.ep-link:hover {
-    color: #fff;
+  color: #fff;
 }
 
 .episode .ep-number {
-    font-family: 'amboy-black', sans-serif;
+  font-family: "Anton", sans-serif;
 }
 
 .ep-description {
-    margin-top: 1em;
+  margin-top: 1em;
 }
 
 .ep-description a {
-    font-family: Arial, Helvetica, sans-serif;
+  font-family: "DM Sans", sans-serif;
 }
 
 /* Guests Styles */
 .guest-list .guest-name {
-    font-size: 1.2rem;
-    font-weight: bold;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 
 .guest-name .guest-link {
-    font-family: Arial, Helvetica, sans-serif;
-    text-decoration: none;
+  font-family: "DM Sans", sans-serif;
+  text-decoration: none;
 }
 
 .guest-list .ep-link {
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: normal;
-    font-size: 1.2rem;
+  font-family: "DM Sans", sans-serif;
+  font-weight: normal;
+  font-size: 1.2rem;
 }
 
 /* Guest Styles */
 #guest-episodes table {
-    font-size: 1.2rem;
+  font-size: 1.2rem;
 }
 
 #guest-episodes table th {
-    font-family: 'amboy-black', sans-serif;
+  font-family: "Anton", sans-serif;
 }
 
 #about-page p {
-    font-size: 1.0rem;
+  font-size: 1rem;
 }
 
 #about-page a {
-    font-family: Arial, Helvetica, sans-serif;
+  font-family: "DM Sans", sans-serif;
 }
 
 /* Media Queries */
 @media screen and (max-width: 400px) {
-    #header, #content, #footer {
-        margin: 0;
-    }
+  #header,
+  #content,
+  #footer {
+    margin: 0;
+  }
 
-    #header-img {
-        display: none;
-    }
+  #header-img {
+    display: none;
+  }
 
-    #header .col-9, #header h1 {
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
+  #header .col-9,
+  #header h1 {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
 
-    th.ep-head-date, th.ep-head-duration,
-    td.ep-date, td.ep-duration {
-        display: none;
-    }
+  th.ep-head-date,
+  th.ep-head-duration,
+  td.ep-date,
+  td.ep-duration {
+    display: none;
+  }
 
-    #header-nav {
-        width: 100%;
-        display: block;
-        padding: 0;
-    }
+  #header-nav {
+    width: 100%;
+    display: block;
+    padding: 0;
+  }
 
-    #header-nav.col-3 ul.nav.justify-content-start li.nav-item a.nav-link {
-        margin-right: 1em;
-        padding: 0;
-    }
+  #header-nav.col-3 ul.nav.justify-content-start li.nav-item a.nav-link {
+    margin-right: 1em;
+    padding: 0;
+  }
 
-    .ep-row img {
-        max-height: 2.5em;
-    }
+  .ep-row img {
+    max-height: 2.5em;
+  }
 
-    .ep-img {
-        float: none;
-        margin-left: 0;
-    }
+  .ep-img {
+    float: none;
+    margin-left: 0;
+  }
 
-    .ep-link {
-        font-size: 1em;
-        line-height: 1em;
-    }
+  .ep-link {
+    font-size: 1em;
+    line-height: 1em;
+  }
 
-    h2.ep-title {
-        font-size: 1.6rem;
-    }
+  h2.ep-title {
+    font-size: 1.6rem;
+  }
 
-    .episode .ep-img {
-        display: block;
-        margin-right: 0;
-        position: relative;
-        top: 0;
-        z-index: -9;
-    }
+  .episode .ep-img {
+    display: block;
+    margin-right: 0;
+    position: relative;
+    top: 0;
+    z-index: -9;
+  }
 }

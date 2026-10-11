@@ -1,6 +1,7 @@
 from flask_sitemapper import Sitemapper
 from datetime import datetime
 import json
+import math
 import os
 from flask import Flask, render_template, request, Response
 from classes.database import Videos
@@ -9,6 +10,12 @@ from classes.guestlist import Guestlist
 from setup import update_db, update_db_collect, load_content
 import threading
 import time
+
+
+# page sizes available in the pagination selector
+PAGE_SIZES = [25, 50, 100, 500, 1000]
+PAGE_SIZE_DEFAULT = 25
+
 
 # Singleton update runner state
 # _update_lock: protects starting/stopping the update
@@ -88,13 +95,56 @@ def set_view_mode(request):
     return view
 
 
-def set_limit(request):
-    # initialize limit with 0
-    limit = 0
+def set_limit(request, default=0):
+    # initialize limit with default
+    limit = default
     # get limit from request args if present
     if 'limit' in request.args:
         limit = request.args.get('limit', limit, type=int)
-    return limit
+    return max(limit, 0)
+
+
+def set_offset(request):
+    # initialize offset with 0
+    offset = 0
+    # get offset from request args if present
+    if 'offset' in request.args:
+        offset = request.args.get('offset', offset, type=int)
+    return max(offset, 0)
+
+
+def set_page(request):
+    # current page number (1-based)
+    page = request.args.get('page', 1, type=int)
+    return max(page, 1)
+
+
+def set_per_page(request):
+    # number of episodes per page
+    per_page = request.args.get('per_page', PAGE_SIZE_DEFAULT, type=int)
+    if per_page not in PAGE_SIZES:
+        per_page = PAGE_SIZE_DEFAULT
+    return per_page
+
+
+def paginate(items, page, per_page):
+    """Slice `items` into a page and return pagination metadata."""
+    total = len(items)
+    total_pages = max(1, math.ceil(total / per_page))
+    page = min(max(page, 1), total_pages)
+    start = (page - 1) * per_page
+    end = min(start + per_page, total)
+    return {
+        'items': items[start:end],
+        'page': page,
+        'per_page': per_page,
+        'total': total,
+        'total_pages': total_pages,
+        'start': start + 1 if total else 0,
+        'end': end,
+        'has_prev': page > 1,
+        'has_next': page < total_pages,
+    }
 
 # helper function for database last modified date
 
@@ -135,6 +185,8 @@ def get_episode_list():
 def get_episode(episode_id):
     v = Videos()
     e = v.read(video_id=episode_id)
+    if not e:
+        return None
     return Episode(e[0], e[1], e[2], e[3], e[4], e[5], e[6])
 
 
@@ -148,6 +200,11 @@ def get_guest_list():
     return guest_list
 
 
+def json_response(data, status=200):
+    """Serialize data as a JSON response with the proper content type."""
+    return Response(json.dumps(data), mimetype='application/json', status=status)
+
+
 # Global variables
 DB_LAST_MODIFIED = db_last_modified()
 
@@ -159,25 +216,30 @@ DB_LAST_MODIFIED = db_last_modified()
 def index():
     display = set_view_mode(request)
     order = sort_order(request)
-    limit = set_limit(request)
+    page = set_page(request)
+    per_page = set_per_page(request)
     # get episodes from database
     episodes = get_videos(order)
+    pagination = paginate(episodes, page, per_page)
     # render the template
     return render_template(
         'index.html',
-        episodes=episodes,
+        episodes=pagination['items'],
         order=order,
         display=display,
-        limit=limit
+        pagination=pagination
     )
 
 
 @sitemapper.include(url_variables={'episode_id': get_episode_list()})
 @app.route('/episode/<episode_id>')
 def episode(episode_id):
+    ep = get_episode(episode_id)
+    if ep is None:
+        return 'Episode not found', 404
     return render_template(
         'episode.html',
-        episode=get_episode(episode_id)
+        episode=ep
     )
 
 
@@ -195,12 +257,17 @@ def guests():
 @app.route('/guest/<guest_name>')
 def guest(guest_name):
     order = sort_order(request)
+    page = set_page(request)
+    per_page = set_per_page(request)
     guest = [g for g in Guestlist(
         order=order).guests if g.name == guest_name][0]
+    pagination = paginate(guest.episodes, page, per_page)
     return render_template(
         'guest.html',
         guest=guest,
-        order=order
+        order=order,
+        episodes=pagination['items'],
+        pagination=pagination
     )
 
 
@@ -278,6 +345,59 @@ def images():
         # get the relative path to the image
         images[i] = '/thumbs/' + image
     return json.dumps(images)
+
+
+# JSON API
+
+@app.route('/api/episodes')
+def api_episodes():
+    """List episodes (optionally sorted, limited, and offset for pagination)."""
+    order = sort_order(request)
+    limit = set_limit(request, default=20)
+    offset = set_offset(request)
+    episodes = get_videos(order)
+    total = len(episodes)
+    end = offset + limit if limit > 0 else len(episodes)
+    return json_response({
+        'count': total,
+        'offset': offset,
+        'limit': limit,
+        'episodes': [e.to_dict() for e in episodes[offset:end]],
+    })
+
+
+@app.route('/api/episodes/<episode_id>')
+def api_episode(episode_id):
+    """Return a single episode by video id."""
+    ep = get_episode(episode_id)
+    if ep is None:
+        return json_response({'error': 'Episode not found'}, 404)
+    return json_response(ep.to_dict())
+
+
+@app.route('/api/guests')
+def api_guests():
+    """List all guests with their episode counts."""
+    order = sort_order(request)
+    guests = Guestlist(order).guests
+    return json_response({
+        'count': len(guests),
+        'guests': [{'name': g.name, 'episode_count': len(g.episodes)} for g in guests],
+    })
+
+
+@app.route('/api/guests/<guest_name>')
+def api_guest(guest_name):
+    """Return a single guest and the list of their episodes."""
+    order = sort_order(request)
+    matches = [g for g in Guestlist(order).guests if g.name == guest_name]
+    if not matches:
+        return json_response({'error': 'Guest not found'}, 404)
+    guest = matches[0]
+    return json_response({
+        'name': guest.name,
+        'episodes': [e.to_dict() for e in guest.episodes],
+    })
 
 
 @app.route("/sitemap.xml")
