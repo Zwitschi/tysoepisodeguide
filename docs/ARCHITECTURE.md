@@ -223,10 +223,6 @@ Pure functions for parsing YouTube data:
 - `is_episode(episode_title, duration)` — returns `True` if the video is a full episode (duration > 1200s AND title contains "Take Your Shoes Off" or "TYSO")
 - `get_episode_number(video_title)` — extracts episode number string from title (handles `#N`, Balcony Series, special cases)
 
-#### `Timing` (`timing.py`)
-
-- `sleep_with_delay(seconds)` — legacy sleep helper; superseded by the token-bucket rate limiter in `utils/youtube.py` and no longer used by the update flow
-
 #### `Images` (`images.py`)
 
 - Scans the `static/thumbs/` directory for `.jpg` files

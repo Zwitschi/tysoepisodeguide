@@ -6,8 +6,6 @@ The **TYSO Episode Guide** is a web application that generates and displays an e
 
 The live site is available at [https://tysoepisodeguide.azurewebsites.net/](https://tysoepisodeguide.azurewebsites.net/).
 
----
-
 ## Project Structure
 
 ```text
@@ -28,13 +26,11 @@ tysoepisodeguide/
 │   ├── guest.py            # Guest model — single guest with episode list
 │   ├── guestlist.py        # Guestlist — builds the full guest list from all episodes
 │   ├── thumbnail.py        # Thumbnail — download and resize YouTube thumbnails
-│   ├── video.py            # Video model — raw YouTube video data representation
-│   └── youtubeapi.py       # YouTubeAPI — legacy wrapper (superseded by utils/youtube.py)
+│   └── video.py            # Video model — raw YouTube video data representation
 ├── utils/                  # Utility modules
 │   ├── __init__.py         # Empty
 │   ├── images.py           # Images — image file listing and base64 encoding
 │   ├── parsing.py          # Parsing — duration parsing, episode detection, number extraction
-│   ├── timing.py           # Timing — legacy sleep/delay helper
 │   └── youtube.py          # YouTubeClient — quota-aware YouTube Data API client
 ├── db/                     # SQLite database directory (created at runtime)
 │   └── tysodb.db           # The SQLite database file
@@ -56,8 +52,6 @@ tysoepisodeguide/
 └── tyso/                   # Python virtual environment
 ```
 
----
-
 ## Key Dependencies
 
 | Package                    | Purpose                                                      |
@@ -70,15 +64,11 @@ tysoepisodeguide/
 | `pillow`                   | Image resizing for thumbnails                                |
 | `requests`                 | HTTP requests for YouTube API (fallback)                     |
 
----
-
 ## Data Flow Overview
 
 1. **Data Collection** (`setup.py`): Queries the YouTube Data API for all videos from Rick Glassman's channel, filters for full episodes, extracts metadata (title, description, duration, thumbnails, episode numbers, guest names), and stores everything in a SQLite database.
 2. **Data Serving** (`app.py`): A Flask application reads from the SQLite database and renders Jinja2 templates to display episodes, guests, and details.
 3. **Live Updates**: The `/update` page uses Server-Sent Events (SSE) to stream real-time progress while the database is being refreshed from the YouTube API.
-
----
 
 ## Database Schema
 
