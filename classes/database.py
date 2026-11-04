@@ -169,7 +169,7 @@ class Videos(Database):
         """Read video from database"""
         connection = sqlite3.connect(self.DB_FILE)
         c = connection.cursor()
-        c.execute("SELECT * FROM videos WHERE id = '" + video_id + "'")
+        c.execute('SELECT * FROM videos WHERE id = ?', (video_id,))
         row = c.fetchone()
         connection.close()
         return row
@@ -186,15 +186,17 @@ class Videos(Database):
         """
         connection = sqlite3.connect(self.DB_FILE)
         c = connection.cursor()
+        # whitelist the sort direction — never interpolate caller input into SQL
+        direction = 'DESC' if str(order).upper() == 'DESC' else 'ASC'
         sql = '''
-        SELECT * FROM videos 
-        WHERE duration > 1200 
+        SELECT * FROM videos
+        WHERE duration > 1200
         AND (title LIKE "%TYSO%" OR title LIKE "%Take Your Shoes Off%")
-        AND title NOT LIKE "%Rick Glassman & Esther Povitsky Have a Time%" 
+        AND title NOT LIKE "%Rick Glassman & Esther Povitsky Have a Time%"
         AND title NOT LIKE "%Playing some Magic: The Gathering%"
         AND title NOT LIKE "%Magic the Gathering LIVE from Marshall Rug Gallery%"
         AND title NOT LIKE "%Take Your Shoes Off - BEST OF %"
-        ORDER BY published_date ''' + order + ''';
+        ORDER BY published_date ''' + direction + ''';
         '''
         c.execute(sql)
         rows = c.fetchall()
