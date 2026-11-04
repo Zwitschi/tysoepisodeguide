@@ -16,6 +16,24 @@ API_VERSION = 'v3'
 API_KEY = os.getenv('API_KEY')
 
 
+class MissingAPIKeyError(RuntimeError):
+    """Raised when the YouTube Data API key is not configured.
+
+    The app can browse the local database without a key, but updating the
+    database requires one. See the README for setup instructions.
+    """
+
+    MESSAGE = (
+        'YouTube API key missing — set API_KEY in your environment or in a '
+        '.env file in the project root. Get a key at '
+        'https://developers.google.com/youtube/v3/getting-started '
+        '(see README.md for setup steps).'
+    )
+
+    def __init__(self, message: str = MESSAGE):
+        super().__init__(message)
+
+
 class TokenBucket:
     """Token bucket rate limiter for YouTube API quota.
 
@@ -65,7 +83,7 @@ class YouTubeClient:
 
     def __init__(self, api_key: Optional[str] = API_KEY, rate_limiter: Optional[TokenBucket] = None):
         if not api_key:
-            raise ValueError('API_KEY environment variable is not set')
+            raise MissingAPIKeyError()
         self.youtube = googleapiclient.discovery.build(
             API_SERVICE_NAME, API_VERSION, developerKey=api_key, cache_discovery=False)
         self.rate_limiter = rate_limiter if rate_limiter is not None else _default_rate_limiter

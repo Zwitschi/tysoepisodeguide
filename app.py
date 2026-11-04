@@ -3,11 +3,13 @@ from datetime import datetime
 import json
 import math
 import os
+import sys
 from flask import Flask, render_template, request, Response
 from classes.database import Videos
 from classes.episode import Episode
 from classes.guestlist import Guestlist
 from setup import update_db, update_db_collect, load_content
+from utils.youtube import MissingAPIKeyError
 import threading
 import time
 
@@ -37,6 +39,10 @@ def _run_update_in_background(force=False):
                 _update_messages.append(msg)
                 _update_condition.notify_all()
         # final message(s) appended by generator
+    except MissingAPIKeyError as e:
+        with _update_condition:
+            _update_messages.append(f'[error] {e}')
+            _update_condition.notify_all()
     except Exception as e:
         with _update_condition:
             _update_messages.append(f"[error] {e}")
@@ -45,6 +51,16 @@ def _run_update_in_background(force=False):
         with _update_condition:
             _update_running = False
             _update_condition.notify_all()
+
+
+# warn at startup if the API key is missing — browsing still works,
+# but database updates from YouTube will fail
+if not os.getenv('API_KEY'):
+    print(
+        'Warning: API_KEY is not set. Browsing the episode guide works, '
+        'but database updates from YouTube are disabled. '
+        'Set API_KEY in your environment or in a .env file (see README.md).',
+        file=sys.stderr)
 
 # add gzip compression
 # from flask_compress import Compress
@@ -125,6 +141,12 @@ def set_per_page(request):
     if per_page not in PAGE_SIZES:
         per_page = PAGE_SIZE_DEFAULT
     return per_page
+
+
+def set_thumbs(request):
+    # thumbnail column visibility: 'show' or 'hide' (default 'hide')
+    thumbs = request.args.get('thumbs', '0', type=str)
+    return 'show' if thumbs == '1' else 'hide'
 
 
 def paginate(items, page, per_page):
@@ -218,6 +240,7 @@ def index():
     order = sort_order(request)
     page = set_page(request)
     per_page = set_per_page(request)
+    thumbs = set_thumbs(request)
     # get episodes from database
     episodes = get_videos(order)
     pagination = paginate(episodes, page, per_page)
@@ -227,6 +250,7 @@ def index():
         episodes=pagination['items'],
         order=order,
         display=display,
+        thumbs=thumbs,
         pagination=pagination
     )
 
@@ -236,7 +260,10 @@ def index():
 def episode(episode_id):
     ep = get_episode(episode_id)
     if ep is None:
-        return 'Episode not found', 404
+        return render_template('notfound.html',
+                               message='Episode not found',
+                               detail='The episode you are looking for does '
+                                      'not exist or is no longer available.'), 404
     return render_template(
         'episode.html',
         episode=ep
@@ -335,18 +362,6 @@ def update_stream():
     return Response(event_stream(), mimetype='text/event-stream')
 
 
-@sitemapper.include(lastmod=DB_LAST_MODIFIED)
-@app.route('/images')
-def images():
-    # load all images from the images folder
-    images = os.listdir(os.path.join(
-        os.path.dirname(__file__), 'static/thumbs'))
-    for i, image in enumerate(images):
-        # get the relative path to the image
-        images[i] = '/thumbs/' + image
-    return json.dumps(images)
-
-
 # JSON API
 
 @app.route('/api/episodes')
@@ -403,6 +418,34 @@ def api_guest(guest_name):
 @app.route("/sitemap.xml")
 def sitemap():
     return sitemapper.generate()
+
+
+# Error handlers — HTML pages for page routes, JSON for /api/* routes
+
+def _wants_json():
+    return request.path.startswith('/api/')
+
+
+@app.errorhandler(404)
+def not_found(e):
+    if _wants_json():
+        return json_response({'error': 'Not found'}, 404)
+    return render_template(
+        'notfound.html',
+        message='Page not found',
+        detail='The page you are looking for does not exist.'
+    ), 404
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    if _wants_json():
+        return json_response({'error': 'Internal server error'}, 500)
+    return render_template(
+        'notfound.html',
+        message='Something went wrong',
+        detail='An unexpected error occurred. Please try again later.'
+    ), 500
 
 
 # Run the app

@@ -1,0 +1,9 @@
+{% extends "_base.html" %} {% block title %}{{ message }}{% endblock %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 text-center my-5">
+    <h1>{{ message }}</h1>
+    <p class="lead">{{ detail }}</p>
+    <a class="btn btn-outline-light" href="/">Back to the episode guide</a>
+  </div>
+</div>
+{% endblock %}
