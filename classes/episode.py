@@ -16,6 +16,11 @@ class Episode:
         self.formatted_date = self.format_date()
         self.formatted_description = self.format_description()
         self.guest = EpisodeGuests(self.title, self.number).guests
+
+    @property
+    def thumb_url(self) -> str:
+        """Direct YouTube CDN thumbnail URL (stored in the DB thumb column)."""
+        return self.thumb
     
     def to_dict(self):
         return {

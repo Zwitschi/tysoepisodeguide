@@ -24,7 +24,6 @@ block head %}{{ super() }}
   rel="canonical"
   href="https://tysoepisodeguide.azurewebsites.net/guest/{{ guest.name }}"
 />
-<script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
 {% endblock %} {% block content %}
 <div class="row justify-content-center">
   <div class="col-12">
@@ -108,7 +107,7 @@ block head %}{{ super() }}
                   target="_blank"
                   ><img
                     class="ep-img"
-                    src="/thumbs/{{ e.id }}.jpg"
+                    src="{{ e.thumb_url }}"
                     title="{{ e.title }}"
                     alt="{{ e.title }}"
                 /></a>

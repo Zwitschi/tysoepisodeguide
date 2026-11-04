@@ -15,7 +15,6 @@ head %}{{ super() }}
 />
 <meta name="twitter:title" content="Take Your Shoes Off with Rick Glassman" />
 <link rel="canonical" href="https://tysoepisodeguide.azurewebsites.net/" />
-<script src="{{ url_for('static', filename='js/preloader.js') }}"></script>
 {% endblock %} {% block content %}
 <div class="row justify-content-center">
   <div class="col-12">
@@ -32,7 +31,7 @@ head %}{{ super() }}
           {% for size in [25, 50, 100, 500, 1000] %} {% set selected =
           "selected" if pagination.per_page == size else "" %}
           <option
-            value="{{ url_for('index', sort=order, view=display, per_page=size, page=1) }}"
+            value="{{ url_for('index', sort=order, view=display, thumbs=1 if thumbs == 'show' else 0, per_page=size, page=1) }}"
             {{
             selected
             }}
@@ -47,9 +46,17 @@ head %}{{ super() }}
         >
       </div>
       <div class="d-flex align-items-center gap-2">
+        <button
+          id="thumbs-toggle"
+          type="button"
+          class="btn btn-sm btn-outline-light"
+          data-shown="{{ '1' if thumbs == 'show' else '0' }}"
+        >
+          {{ 'Hide Thumbnails' if thumbs == 'show' else 'Show Thumbnails' }}
+        </button>
         <a
           class="btn btn-sm btn-outline-light {% if not pagination.has_prev %}disabled{% endif %}"
-          href="{{ url_for('index', sort=order, view=display, per_page=pagination.per_page, page=pagination.page - 1) }}"
+          href="{{ url_for('index', sort=order, view=display, thumbs=1 if thumbs == 'show' else 0, per_page=pagination.per_page, page=pagination.page - 1) }}"
           >Previous</a
         >
         <span class="px-2"
@@ -57,7 +64,7 @@ head %}{{ super() }}
         >
         <a
           class="btn btn-sm btn-outline-light {% if not pagination.has_next %}disabled{% endif %}"
-          href="{{ url_for('index', sort=order, view=display, per_page=pagination.per_page, page=pagination.page + 1) }}"
+          href="{{ url_for('index', sort=order, view=display, thumbs=1 if thumbs == 'show' else 0, per_page=pagination.per_page, page=pagination.page + 1) }}"
           >Next</a
         >
       </div>
@@ -65,14 +72,14 @@ head %}{{ super() }}
     {% if display=="table" %}
     <table
       id="episode-guide"
-      class="table table-dark table-striped table-bordered table-hover"
+      class="table table-dark table-striped table-bordered table-hover{% if thumbs == 'show' %} thumbs-visible{% endif %}"
     >
       <thead class="table-dark">
         <tr>
           <th class="ep-thumb"></th>
           <th>
             <a
-              href="{{ url_for('index', sort='DESC' if order == 'ASC' else 'ASC', view=display, per_page=pagination.per_page, page=1) }}"
+              href="{{ url_for('index', sort='DESC' if order == 'ASC' else 'ASC', view=display, thumbs=1 if thumbs == 'show' else 0, per_page=pagination.per_page, page=1) }}"
               >Episode</a
             >
           </th>
@@ -91,8 +98,9 @@ head %}{{ super() }}
               target="_blank"
               ><img
                 class="ep-img"
-                src="/thumbs/{{ e.id }}.jpg"
+                src="{{ e.thumb_url }}"
                 title="{{ e.title }}"
+                alt="{{ e.title }}"
             /></a>
           </td>
           <td>
@@ -120,7 +128,11 @@ head %}{{ super() }}
           href="{{ e.url }}"
           target="_blank"
         >
-          <img src="/thumbs/{{ e.id }}.jpg" title="{{ e.title }}" />
+          <img
+            src="{{ e.thumb_url }}"
+            title="{{ e.title }}"
+            alt="{{ e.title }}"
+          />
         </a>
       </div>
       {% endfor %}
@@ -128,6 +140,27 @@ head %}{{ super() }}
     {% endif %}
   </div>
 </div>
+<script>
+  (function () {
+    var btn = document.getElementById("thumbs-toggle");
+    if (!btn) return;
+    var table = document.getElementById("episode-guide");
+    var shown = btn.dataset.shown === "1";
+
+    function apply() {
+      table.classList.toggle("thumbs-visible", shown);
+      btn.textContent = shown ? "Hide Thumbnails" : "Show Thumbnails";
+      var url = new URL(window.location.href);
+      url.searchParams.set("thumbs", shown ? "1" : "0");
+      history.replaceState(null, "", url);
+    }
+
+    btn.addEventListener("click", function () {
+      shown = !shown;
+      apply();
+    });
+  })();
+</script>
 {% endblock %} {% block footer %} {% if display=="table" %}
 <div id="footer">
   &copy; 2026 TYSO Episode Guide by

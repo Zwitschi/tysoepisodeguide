@@ -177,6 +177,17 @@ tbody .ep-row img {
   width: 200px;
 }
 
+/* Thumbnail column toggle: hidden by default, shown with .thumbs-visible */
+table#episode-guide th.ep-thumb,
+table#episode-guide td.ep-thumb {
+  display: none;
+}
+
+table#episode-guide.thumbs-visible th.ep-thumb,
+table#episode-guide.thumbs-visible td.ep-thumb {
+  display: table-cell;
+}
+
 .ep-row .ep-guest a {
   font-family: "DM Sans", sans-serif;
 }
