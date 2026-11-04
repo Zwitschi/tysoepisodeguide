@@ -7,9 +7,8 @@ from datetime import datetime
 from classes.episode import Episode
 from classes.channel import Channel
 from classes.database import Database, Channels, Videos
-from classes.thumbnail import Thumbnail
 from utils.parsing import parse_duration, is_episode, get_episode_number
-from utils.youtube import YouTubeClient, get_client
+from utils.youtube import YouTubeClient, get_client, MissingAPIKeyError
 
 BASE_DIR = os.getcwd()
 DB_FILE = os.path.join(BASE_DIR, 'db', 'tysodb.db')
@@ -29,25 +28,6 @@ def load_content(content) -> str:
             license = f.read()
         return markdown.markdown(license)
     return ''
-
-
-def check_thumbnails() -> None:
-    # get all videos from db
-    v = Videos()
-    videos = v.read_videos()
-    # check if thumbnail is saved in file system
-    for video in videos:
-        video_id = video[0]
-        thumbnail_format = video[4].split('.')[-1]
-        thumbnail_path = os.path.join(
-            BASE_DIR, 'static', 'thumbs', video_id + '.' + thumbnail_format)
-        if not os.path.exists(thumbnail_path):
-            t = Thumbnail(video[4], thumbnail_path)
-            t.download()
-            t.resize()
-        else:
-            t = Thumbnail(video[4], thumbnail_path)
-            t.resize()
 
 
 def get_channel_details(channel_id: str) -> dict:
@@ -104,20 +84,8 @@ def _detail_to_video(detail: dict) -> Optional[dict]:
     }
 
 
-def _download_thumbnail(episode: dict) -> None:
-    """Download the thumbnail for an episode if it is not already cached."""
-    thumb_url = episode.get('thumb')
-    if not thumb_url:
-        return
-    thumbnail_format = thumb_url.split('.')[-1]
-    thumbnail_path = os.path.join(
-        BASE_DIR, 'static', 'thumbs', episode['id'] + '.' + thumbnail_format)
-    if not os.path.exists(thumbnail_path):
-        Thumbnail(thumb_url, thumbnail_path).download()
-
-
 def fetch_video(video_id: str) -> dict:
-    """Fetch full metadata for a single video and download its thumbnail."""
+    """Fetch full metadata for a single video."""
     yt = get_client()
     detail = yt.get_videos_details(
         [video_id], part='snippet,contentDetails').get(video_id)
@@ -126,8 +94,6 @@ def fetch_video(video_id: str) -> dict:
     video = _detail_to_video(detail)
     if video is None:
         return {}
-    if video['number'] != '0':
-        _download_thumbnail(video)
     return video
 
 
@@ -244,8 +210,6 @@ def update_db(force: bool = False):
             if video is None:
                 continue
             if v.read(video['id']) is None:
-                if video['number'] != '0':
-                    _download_thumbnail(video)
                 v.insert(video)
                 yield 'Video details saved to database: ' + video['title']
             msg = handle_episode_detail(video)
@@ -332,7 +296,7 @@ def action_from_arguments(*args) -> tuple[str, bool]:
     """
     Check the command line arguments and execute the appropriate function
 
-    Accepts arguments: install, update, force, thumbnails, baseline
+    Accepts arguments: install, update, force, baseline
     Default is 'update'
     """
     action = 'update'
@@ -347,8 +311,6 @@ def action_from_arguments(*args) -> tuple[str, bool]:
         elif args[0] == 'force':
             action = 'update'
             force = True
-        elif args[0] == 'thumbnails':
-            action = 'thumbnails'
         elif args[0] == 'baseline':
             action = 'baseline'
     elif len(args) == 2:
@@ -357,7 +319,7 @@ def action_from_arguments(*args) -> tuple[str, bool]:
             force = True
     else:
         print(
-            'Usage: python setup.py [install|update [force]|force|thumbnails|baseline]')
+            'Usage: python setup.py [install|update [force]|force|baseline]')
         sys.exit(1)
     return action, force
 
@@ -370,25 +332,27 @@ def main(*args):
     action, force = action_from_arguments(*args)
     db = Database()
     # execute action
-    if action == 'install':
-        # install database
-        db.install()
-        # update database (CLI callers expect a collected string)
-        update_db_collect(force)
-    elif action == 'update':
-        # check if database is installed
-        if not db.check_install():
+    try:
+        if action == 'install':
+            # install database
             db.install()
-        # update database (CLI callers expect a collected string)
-        update_db_collect(force)
-    elif action == 'thumbnails':
-        # check thumbnails
-        check_thumbnails()
-    elif action == 'baseline':
-        print(baseline_report(), end='')
-    else:
-        print(
-            'Usage: python setup.py [install|update [force]|force|thumbnails|baseline]')
+            # update database (CLI callers expect a collected string)
+            update_db_collect(force)
+        elif action == 'update':
+            # check if database is installed
+            if not db.check_install():
+                db.install()
+            # update database (CLI callers expect a collected string)
+            update_db_collect(force)
+        elif action == 'baseline':
+            print(baseline_report(), end='')
+        else:
+            print(
+                'Usage: python setup.py [install|update [force]|force|baseline]')
+            sys.exit(1)
+    except MissingAPIKeyError as e:
+        # friendly CLI error — no traceback
+        print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
     # exit
     sys.exit(0)

@@ -3,5 +3,4 @@ flask_sitemapper
 google-api-python-client
 gunicorn
 markdown
-pillow
 requests
