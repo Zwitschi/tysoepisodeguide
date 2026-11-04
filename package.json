@@ -1,0 +1,14 @@
+{
+  "name": "tysoepisodeguide",
+  "private": true,
+  "description": "Markdown linting and formatting tooling (Python app — see setup.py)",
+  "scripts": {
+    "lint:md": "markdownlint-cli2",
+    "format:md": "prettier --write \"**/*.md\"",
+    "check:md": "prettier --check \"**/*.md\""
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "^0.24.0",
+    "prettier": "^3.9.10"
+  }
+}
