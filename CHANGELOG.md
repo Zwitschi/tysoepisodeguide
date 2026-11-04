@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] — 2026-11-04
+
 ### Added
 
 - Thumbnail show/hide toggle on the episode list (button above the table,
@@ -168,7 +170,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database layer (formerly ignored) (#d9bdedb)
 - Sorting and layout changes (#36f2821)
 
-[Unreleased]: https://github.com/Zwitschi/tysoepisodeguide/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/Zwitschi/tysoepisodeguide/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/Zwitschi/tysoepisodeguide/compare/v2.0.0...v3.1.0
 [3.0.0]: https://github.com/Zwitschi/tysoepisodeguide/compare/v2.0.0...92e0ff4
 [2.1.0]: https://github.com/Zwitschi/tysoepisodeguide/compare/v2.0.0...ea7ce98
 [2.0.0]: https://github.com/Zwitschi/tysoepisodeguide/compare/634f2d1...ebb45d7
