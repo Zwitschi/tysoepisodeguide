@@ -2,7 +2,12 @@
 
 ## Project Description
 
-The **TYSO Episode Guide** is a web application that generates and displays an episode guide for the _Take Your Shoes Off_ podcast with Rick Glassman. It fetches video data from [Rick Glassman's YouTube Channel](https://www.youtube.com/@rickglassman) using the [YouTube Data API v3](https://developers.google.com/youtube/v3), stores the information in a local SQLite database, and serves it via a Flask web application.
+The **TYSO Episode Guide** is a web application that generates and displays an
+episode guide for the _Take Your Shoes Off_ podcast with Rick Glassman. It
+fetches video data from [Rick Glassman's YouTube Channel](https://www.youtube.com/@rickglassman)
+using the [YouTube Data API v3](https://developers.google.com/youtube/v3),
+stores the information in a local SQLite database, and serves it via a Flask
+web application.
 
 The live site is available at [https://tysoepisodeguide.azurewebsites.net/](https://tysoepisodeguide.azurewebsites.net/).
 
@@ -25,7 +30,6 @@ tysoepisodeguide/
 │   ├── episodenumber.py    # EpisodeNumber — episode number extraction from titles
 │   ├── guest.py            # Guest model — single guest with episode list
 │   ├── guestlist.py        # Guestlist — builds the full guest list from all episodes
-│   ├── thumbnail.py        # Thumbnail — download and resize YouTube thumbnails
 │   └── video.py            # Video model — raw YouTube video data representation
 ├── utils/                  # Utility modules
 │   ├── __init__.py         # Empty
@@ -38,8 +42,7 @@ tysoepisodeguide/
 │   ├── css/style.css       # Stylesheet
 │   ├── img/                # Image assets
 │   ├── js/preloader.js     # JavaScript preloader
-│   └── thumbs/             # Downloaded and resized video thumbnails
-├── templates/              # Jinja2 HTML templates
+│   └── thumbs/             # (retired) thumbnails now load from the YouTube CDN
 │   ├── _base.html          # Base layout template
 │   ├── _head.html          # HTML <head> partial
 │   ├── _nav.html           # Navigation bar partial
@@ -62,13 +65,19 @@ tysoepisodeguide/
 | `gunicorn`                 | Production WSGI server                                       |
 | `markdown`                 | Convert Markdown files to HTML for the About page            |
 | `pillow`                   | Image resizing for thumbnails                                |
-| `requests`                 | HTTP requests for YouTube API (fallback)                     |
 
 ## Data Flow Overview
 
-1. **Data Collection** (`setup.py`): Queries the YouTube Data API for all videos from Rick Glassman's channel, filters for full episodes, extracts metadata (title, description, duration, thumbnails, episode numbers, guest names), and stores everything in a SQLite database.
-2. **Data Serving** (`app.py`): A Flask application reads from the SQLite database and renders Jinja2 templates to display episodes, guests, and details.
-3. **Live Updates**: The `/update` page uses Server-Sent Events (SSE) to stream real-time progress while the database is being refreshed from the YouTube API.
+1. **Data Collection** (`setup.py`): Queries the YouTube Data API for all videos
+   from Rick Glassman's channel, filters for full episodes, extracts metadata
+   (title, description, duration, thumbnails, episode numbers, guest names),
+   and stores everything in a SQLite database.
+2. **Data Serving** (`app.py`): A Flask application reads from the SQLite
+   database and renders Jinja2 templates to display episodes, guests, and
+   details.
+3. **Live Updates**: The `/update` page uses Server-Sent Events (SSE) to stream
+   real-time progress while the database is being refreshed from the YouTube
+   API.
 
 ## Database Schema
 

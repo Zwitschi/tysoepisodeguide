@@ -50,10 +50,10 @@ Server-side keeps only:
 
 Defaults and controls:
 
-| Parameter | Values                   | Default |
-| --------- | ------------------------ | ------- |
-| `limit`   | 20, 50, 100, 500, 1000   | 20      |
-| `offset`  | non-negative int         | 0       |
+| Parameter | Values                 | Default |
+| --------- | ---------------------- | ------- |
+| `limit`   | 20, 50, 100, 500, 1000 | 20      |
+| `offset`  | non-negative int       | 0       |
 
 The API already supports `limit` and `offset` (`GET /api/episodes?limit=&offset=`),
 and returns `count`, `offset`, `limit`, and the page of episodes.
@@ -103,12 +103,12 @@ The live site is a Nuxt 3 app. Computed styles on the homepage:
 Fonts are self-hosted in `/_nuxt/` (declared via `@font-face` in
 `entry.*.css`). Latin subset files:
 
-| Font | Weight | URL |
-| ---- | ------ | --- |
-| Anton | 400 | `https://rickglassman.com/_nuxt/Anton-normal-400-latin.Byf51wtH.woff2` |
-| DM Sans | 400 | `https://rickglassman.com/_nuxt/DM_Sans-normal-400-latin.Xz1IZZA0.woff2` |
-| Dela Gothic One | 400 | `https://rickglassman.com/_nuxt/Dela_Gothic_One-normal-400-latin.AgyGD05y.woff2` |
-| Space Grotesk | 500 | `https://rickglassman.com/_nuxt/Space_Grotesk-normal-500-latin.BhU9QXUp.woff2` |
+| Font            | Weight | URL                                                                              |
+| --------------- | ------ | -------------------------------------------------------------------------------- |
+| Anton           | 400    | `https://rickglassman.com/_nuxt/Anton-normal-400-latin.Byf51wtH.woff2`           |
+| DM Sans         | 400    | `https://rickglassman.com/_nuxt/DM_Sans-normal-400-latin.Xz1IZZA0.woff2`         |
+| Dela Gothic One | 400    | `https://rickglassman.com/_nuxt/Dela_Gothic_One-normal-400-latin.AgyGD05y.woff2` |
+| Space Grotesk   | 500    | `https://rickglassman.com/_nuxt/Space_Grotesk-normal-500-latin.BhU9QXUp.woff2`   |
 
 (DM Sans 500/700 are also used on the site.)
 
@@ -127,6 +127,22 @@ Fonts are self-hosted in `/_nuxt/` (declared via `@font-face` in
 
 Note: `Space Grotesk` is downloaded but not yet used by any rule; it is
 available for future accents.
+
+## Thumbnail toggle on the episode list (implemented 2026-11-04)
+
+The episode table on the main page has a thumbnail visibility toggle above it.
+
+| Aspect            | Decision                                                                                                       |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- |
+| Default state     | **Hidden** — cleaner table, faster initial load                                                                |
+| Toggle            | `#thumbs-toggle` button above the table ("Show Thumbnails" / "Hide Thumbnails")                                |
+| Mechanism         | JS toggles `.thumbs-visible` class on `#episode-guide`; no page reload                                         |
+| State persistence | URL param `?thumbs=1\|0`, carried through pagination/sort/per-page links and updated via`history.replaceState` |
+| CSS               | `th/td.ep-thumb { display: none }` by default; `.thumbs-visible` overrides to `display: table-cell`            |
+| Thumbnail source  | YouTube CDN (`i.ytimg.com`) via `Episode.thumb_url` — no self-hosted copies                                    |
+
+Server side: `set_thumbs(request)` helper in `app.py` reads `?thumbs=` and
+passes `'show'`/`'hide'` to the template (default `'hide'`).
 
 ## Suggested implementation order
 

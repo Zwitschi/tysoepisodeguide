@@ -7,22 +7,22 @@ Base URL: `/api`
 
 ## Endpoints
 
-| Method | Route                        | Description                                        |
-| ------ | ---------------------------- | -------------------------------------------------- |
-| GET    | `/api/episodes`              | List episodes (paginated)                          |
-| GET    | `/api/episodes/<episode_id>` | Episode details by YouTube video id                |
-| GET    | `/api/guests`                | List all guests with their episode counts          |
-| GET    | `/api/guests/<guest_name>`   | Guest details and the list of their episodes       |
+| Method | Route                        | Description                                  |
+| ------ | ---------------------------- | -------------------------------------------- |
+| GET    | `/api/episodes`              | List episodes (paginated)                    |
+| GET    | `/api/episodes/<episode_id>` | Episode details by YouTube video id          |
+| GET    | `/api/guests`                | List all guests with their episode counts    |
+| GET    | `/api/guests/<guest_name>`   | Guest details and the list of their episodes |
 
 ## Query parameters
 
 `/api/episodes` and `/api/guests` accept:
 
-| Parameter | Values            | Default | Description                              |
-| --------- | ----------------- | ------- | ---------------------------------------- |
-| `sort`    | `ASC` or `DESC`   | `ASC`   | Sort order (by publish date)             |
-| `limit`   | non-negative int  | `20`    | Max items per page (`0` returns all)     |
-| `offset`  | non-negative int  | `0`     | Number of items to skip (pagination)     |
+| Parameter | Values           | Default | Description                          |
+| --------- | ---------------- | ------- | ------------------------------------ |
+| `sort`    | `ASC` or `DESC`  | `ASC`   | Sort order (by publish date)         |
+| `limit`   | non-negative int | `20`    | Max items per page (`0` returns all) |
+| `offset`  | non-negative int | `0`     | Number of items to skip (pagination) |
 
 ## Response shapes
 
@@ -39,7 +39,7 @@ Base URL: `/api`
       "title": "...",
       "url": "https://www.youtube.com/watch?v=video-id",
       "description": "...",
-      "thumb": "https://...jpg",
+      "thumb": "https://i.ytimg.com/vi/video-id/hqdefault.jpg",
       "duration": 6001,
       "number": "1",
       "formatted_date": "2019-04-22",
@@ -60,9 +60,7 @@ Returns a single episode object (same shape as the list items). Returns
 ```json
 {
   "count": 123,
-  "guests": [
-    { "name": "Adam Ray", "episode_count": 12 }
-  ]
+  "guests": [{ "name": "Adam Ray", "episode_count": 12 }]
 }
 ```
 

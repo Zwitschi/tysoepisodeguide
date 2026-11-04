@@ -36,7 +36,6 @@ The Flask application defines the following routes:
 | `/LICENSE`              | `about.html`   | Renders `LICENSE` as HTML                                                 |
 | `/update`               | `update.html`  | Database update page (triggers SSE stream)                                |
 | `/update/stream`        | —              | SSE endpoint streaming live update progress                               |
-| `/images`               | —              | Returns JSON list of thumbnail file paths                                 |
 | `/api/episodes`         | —              | JSON API — episode list (`?sort=&limit=&offset=`)                         |
 | `/api/episodes/<id>`    | —              | JSON API — single episode by video id                                     |
 | `/api/guests`           | —              | JSON API — guest list with episode counts                                 |
@@ -45,9 +44,16 @@ The Flask application defines the following routes:
 
 **Key Design Patterns in app.py:**
 
-- **Helper functions** extract query parameters: `sort_order()`, `set_view_mode()`, `set_limit()` normalize user input from URL query strings.
-- **SSE Streaming**: The `/update/stream` route uses a background thread with `threading.Thread`, `threading.Lock`, and `threading.Condition` to run the database update while streaming progress messages as Server-Sent Events. The `event_stream()` generator yields messages in SSE `data:` format.
-- **Singleton update runner**: Global variables `_update_lock`, `_update_running`, `_update_messages`, and `_update_condition` ensure only one update runs at a time and all connected clients receive the same stream of messages.
+- **Helper functions** extract query parameters: `sort_order()`,
+  `set_view_mode()`, `set_limit()` normalize user input from URL query strings.
+- **SSE Streaming**: The `/update/stream` route uses a background thread with
+  `threading.Thread`, `threading.Lock`, and `threading.Condition` to run the
+  database update while streaming progress messages as Server-Sent Events. The
+  `event_stream()` generator yields messages in SSE `data:` format.
+- **Singleton update runner**: Global variables `_update_lock`,
+  `_update_running`, `_update_messages`, and `_update_condition` ensure only
+  one update runs at a time and all connected clients receive the same stream
+  of messages.
 
 ### 2. Setup / Data Collection Layer (`setup.py`)
 
@@ -68,27 +74,27 @@ update_db(force=False)
     │
     └── For each new video:
         ├── _detail_to_video() — apply is_episode() + get_episode_number()
-        ├── _download_thumbnail() — only for newly inserted episodes
         └── process_existing_video(row) — re-verify local rows
 ```
 
-**Generator pattern**: `update_db()` is a Python generator that `yield`s progress messages. This allows both synchronous callers (`update_db_collect()` → returns a string) and asynchronous SSE consumers (via the background thread) to use the same function.
+**Generator pattern**: `update_db()` is a Python generator that `yield`s
+progress messages. This allows both synchronous callers (`update_db_collect()`
+→ returns a string) and asynchronous SSE consumers (via the background thread)
+to use the same function.
 
 **Key functions:**
 
-| Function                          | Description                                                           |
-| --------------------------------- | --------------------------------------------------------------------- |
-| `load_content(content)`           | Loads Markdown files and converts them to HTML                        |
-| `get_channel_details(channel_id)` | Fetches YouTube channel metadata                                      |
-| `_playlist_item_meta(item)`       | Extracts video ID/title/publish date from a playlistItems item        |
-| `_detail_to_video(detail)`         | Builds a video dict; episodes get a parsed number, others get `0`   |
-| `_download_thumbnail(episode)`    | Downloads a thumbnail only when it is not already cached              |
-| `fetch_video(video_id)`           | Fetches full metadata for a single video (fills NULL-title rows)      |
-| `handle_episode_detail(episode)`  | Compares episode data with DB and updates if changed                  |
-| `check_thumbnails()`              | Ensures all thumbnails are downloaded and resized                     |
-| `update_db(force)`                | Main update orchestrator (generator)                                  |
-| `update_db_collect(force)`        | Wrapper that collects generator output into a string                  |
-| `action_from_arguments(*args)`    | CLI argument parser for `setup.py`                                    |
+| Function                          | Description                                                       |
+| --------------------------------- | ----------------------------------------------------------------- |
+| `load_content(content)`           | Loads Markdown files and converts them to HTML                    |
+| `get_channel_details(channel_id)` | Fetches YouTube channel metadata                                  |
+| `_playlist_item_meta(item)`       | Extracts video ID/title/publish date from a playlistItems item    |
+| `_detail_to_video(detail)`        | Builds a video dict; episodes get a parsed number, others get `0` |
+| `fetch_video(video_id)`           | Fetches full metadata for a single video (fills NULL-title rows)  |
+| `handle_episode_detail(episode)`  | Compares episode data with DB and updates if changed              |
+| `update_db(force)`                | Main update orchestrator (generator)                              |
+| `update_db_collect(force)`        | Wrapper that collects generator output into a string              |
+| `action_from_arguments(*args)`    | CLI argument parser for `setup.py`                                |
 
 ### 3. Core Data Model Classes (`classes/`)
 
@@ -124,9 +130,12 @@ Manages SQLite connections and provides CRUD operations.
 - `update_number(video_id, number)` — updates only the episode number
 - `read(video_id)` — reads a single video by ID
 - `read_ids()` — returns all video IDs
-- `read_videos(order)` — returns all episode videos (filters out non-episode content like "Best of" compilations, shorts, and specific excluded titles)
+- `read_videos(order)` — returns all episode videos (filters out non-episode
+  content like "Best of" compilations, shorts, and specific excluded titles)
 
-**Security note**: The `read()` method uses string concatenation for the SQL query (`WHERE id = '` + video_id + `'`) rather than parameterized queries. This is a SQL injection risk if `video_id` comes from an untrusted source.
+**Security note**: The `read()` method uses string concatenation for the SQL
+query (`WHERE id = '` + video_id + `'`) rather than parameterized queries. This
+is a SQL injection risk if `video_id` comes from an untrusted source.
 
 #### `Episode` (`episode.py`)
 
@@ -147,7 +156,8 @@ Properties:
 
 #### `Video` (`video.py`)
 
-A simpler model for raw YouTube video data. Contains the same core fields as `Episode` but without the parsing/number/guest logic.
+A simpler model for raw YouTube video data. Contains the same core fields as
+`Episode` but without the parsing/number/guest logic.
 
 #### `EpisodeNumber` (`episodenumber.py`)
 
@@ -163,11 +173,14 @@ Extracts episode numbers from video titles. Handles multiple formats:
 
 Extracts guest names from episode titles using a multi-step cleaning pipeline:
 
-1. **`clean_by_mapping()`** — exact keyword-to-replacement mappings for known guests (e.g., `"Are You Garbage"` → `"Kevin James Ryan + Henry Foley"`)
+1. **`clean_by_mapping()`** — exact keyword-to-replacement mappings for known
+   guests (e.g., `"Are You Garbage"` → `"Kevin James Ryan + Henry Foley"`)
 2. **`sleepover_series()`** — strips "The Sleepover Series:" prefix
 3. **`uncle_bob()`** — normalizes "(feat. Uncle Bob)" format
-4. **`clean_by_split()`** — splits title on `(`, `[`, `aka`, `-` and takes the first part
-5. **`clean_by_list_replace()`** — removes known patterns like episode numbers, "UNCENSORED", "on TYSO", "w/ Rick Glassman", etc.
+4. **`clean_by_split()`** — splits title on `(`, `[`, `aka`, `-` and takes the
+   first part
+5. **`clean_by_list_replace()`** — removes known patterns like episode numbers,
+   "UNCENSORED", "on TYSO", "w/ Rick Glassman", etc.
 6. Removes version numbers (1.0, 2.0, etc.)
 7. The cleaned title becomes the guest name(s), split by `+`
 
@@ -190,12 +203,12 @@ Builds the complete guest index from the database.
 - Creates `Guest` objects with their associated episodes
 - Supports ascending/descending sort order
 
-#### `Thumbnail` (`thumbnail.py`)
+#### Thumbnails (YouTube CDN)
 
-Handles downloading and resizing YouTube video thumbnails.
-
-- `download()` — fetches the thumbnail from the URL and saves it locally, then resizes
-- `resize()` — resizes the image to 400px width while maintaining aspect ratio (uses Pillow)
+Thumbnails are no longer downloaded or self-hosted. The `thumb` column stores
+the YouTube thumbnail URL (e.g. `https://i.ytimg.com/vi/<id>/hqdefault.jpg`),
+exposed to templates via the `Episode.thumb_url` property and rendered directly
+from the YouTube CDN.
 
 #### `YouTubeClient` (`utils/youtube.py`)
 
@@ -204,7 +217,8 @@ A quota-aware wrapper around the Google API Python client (ported from the
 
 - Uses `googleapiclient.discovery.build()` with the `API_KEY` environment variable
 - `TokenBucket` rate limiter (10,000 units/day) wraps every API call
-- `get_channel_video_items()` — paginates the uploads playlist (`playlistItems`, 1 unit/50 items), optionally stopping at known video IDs
+- `get_channel_video_items()` — paginates the uploads playlist
+  (`playlistItems`, 1 unit/50 items), optionally stopping at known video IDs
 - `get_videos_details()` — batch fetches details in groups of 50 IDs
 
 ### 4. Utility Modules (`utils/`)
@@ -220,7 +234,8 @@ point for all YouTube API access. The older raw-HTTP `API` class (formerly in
 Pure functions for parsing YouTube data:
 
 - `parse_duration(duration)` — converts ISO 8601 duration (e.g., `PT1H5M30S`) to total seconds (integer)
-- `is_episode(episode_title, duration)` — returns `True` if the video is a full episode (duration > 1200s AND title contains "Take Your Shoes Off" or "TYSO")
+- `is_episode(episode_title, duration)` — returns `True` if the video is a full
+  episode (duration > 1200s AND title contains "Take Your Shoes Off" or "TYSO")
 - `get_episode_number(video_title)` — extracts episode number string from title (handles `#N`, Balcony Series, special cases)
 
 #### `Images` (`images.py`)
@@ -264,10 +279,7 @@ setup.py update_db(force=False)
     │
     └── For each new video:
         ├── _detail_to_video() — is_episode() + get_episode_number()
-        ├── If episode:
-        │   ├── _download_thumbnail() (only if not cached)
-        │   └── Insert into DB
-        ├── If not an episode, still insert into DB (number '0')
+        ├── Insert into DB (episodes get parsed number, others '0')
         ├── Then re-verify local rows via process_existing_video()
         │
         └── yield "[timestamp] Update finished"
@@ -307,12 +319,40 @@ Example: /episode/abc123
 - **API Key**: Set the `API_KEY` environment variable (or in a `.env` file) with a YouTube Data API v3 key.
 - **Channel ID**: Hardcoded as `CHANNEL_ID = 'UCYCGsNTvYxfkPkfQopRMP7w'` (Rick Glassman's channel) in `setup.py`.
 - **Database path**: `db/tysodb.db` relative to the project root.
-- **Thumbnail size**: Resized to 400px width (defined in `classes/thumbnail.py`).
+- **Thumbnails**: Served directly from the YouTube CDN (`i.ytimg.com`) using
+  the URL stored in the DB `thumb` column; no local caching.
 
 ---
 
 ## Security Considerations
 
-1. **SQL Injection**: The `Videos.read()` method uses string concatenation for the WHERE clause. In the current context, `video_id` values come from the YouTube API or URL parameters. For production, consider using parameterized queries.
-2. **API Key**: The YouTube API key is read from an environment variable and used in URL query strings. Ensure the `.env` file is not tracked in version control.
-3. **SSRF**: The thumbnail downloader fetches URLs from the YouTube API response — low risk since the source is trusted.
+1. **SQL Injection**: All database queries use parameterized `?` placeholders.
+   The sort direction in `Videos.read_videos()` is whitelisted to `ASC`/`DESC`
+   inside the class, so caller input never reaches the SQL string.
+2. **API Key**: The YouTube API key is read from an environment variable and
+   used in URL query strings. Ensure the `.env` file is not tracked in version
+   control. A missing key raises `MissingAPIKeyError` with an actionable
+   message (see Error Handling below).
+
+---
+
+## Error Handling
+
+### Missing API key
+
+- `utils/youtube.py` defines `MissingAPIKeyError(RuntimeError)` with an
+  actionable message (set `API_KEY` in the environment or `.env`, link to the
+  Google API key docs). Raised by `YouTubeClient.__init__`.
+- **CLI** (`setup.py`): caught in `main()` — friendly stderr message, exit
+  code 1, no traceback.
+- **Web app** (`app.py`): caught in `_run_update_in_background()` — the SSE
+  stream shows the actionable message. A startup warning notes that browsing
+  works but updates are disabled. Browsing never requires the API key.
+
+### HTTP errors
+
+- `@app.errorhandler(404)` and `@app.errorhandler(500)` render
+  `templates/notfound.html` for page routes and return JSON `{"error": ...}`
+  for `/api/*` routes.
+- `/episode/<id>` with an unknown id renders a dedicated "Episode not found"
+  page (404).
